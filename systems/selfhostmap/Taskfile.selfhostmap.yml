@@ -41,7 +41,7 @@ tasks:
     deps:
       - clone
     status:
-      - test -f {{.SELFHOSTMAP_BIN}}
+      - test -x {{.SELFHOSTMAP_BIN}}
     cmds:
       - mkdir -p {{.BIN_DIR}}
       - cd {{.SELFHOSTMAP_DIR}} && go build -o {{.SELFHOSTMAP_BIN}} ./cmd/selfhostmap

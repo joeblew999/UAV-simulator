@@ -42,10 +42,10 @@ tasks:
     deps:
       - clone
     status:
-      - test -f {{.NATS2SSE_BIN}}
+      - test -x {{.NATS2SSE_BIN}}
     cmds:
       - mkdir -p {{.BIN_DIR}}
-      - cd {{.NATS2SSE_DIR}} && go build -o {{.NATS2SSE_BIN}} .
+      - cd {{.NATS2SSE_DIR}} && go build -o {{.NATS2SSE_BIN}} ./cmd/server
 
   deps:clean:
     desc: Remove nats2sse source and binary
