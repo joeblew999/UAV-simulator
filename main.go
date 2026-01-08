@@ -99,6 +99,7 @@ func main() {
 		natsAddr = os.Getenv("NATS_URL")
 	}
 	var natsClient *natsclient.Client
+	var microService *natsclient.MicroService
 	if natsAddr != "" {
 		var err error
 		natsClient, err = natsclient.New(natsAddr, simulator)
@@ -108,6 +109,12 @@ func main() {
 			if err := natsClient.Start(); err != nil {
 				log.Printf("Warning: Failed to start NATS client: %v", err)
 				natsClient = nil
+			} else {
+				// Start NATS Micro service for HTTP API (narun-gw)
+				microService, err = natsclient.NewMicroService(natsClient.Conn(), simulator)
+				if err != nil {
+					log.Printf("Warning: Failed to start NATS Micro service: %v", err)
+				}
 			}
 		}
 	}
@@ -119,6 +126,9 @@ func main() {
 	}
 
 	// Cleanup NATS on exit
+	if microService != nil {
+		microService.Stop()
+	}
 	if natsClient != nil {
 		natsClient.Stop()
 	}

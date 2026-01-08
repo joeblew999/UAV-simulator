@@ -128,6 +128,11 @@ func (c *Client) Stop() {
 	log.Println("NATS client stopped")
 }
 
+// Conn returns the underlying NATS connection for use by other services.
+func (c *Client) Conn() *nats.Conn {
+	return c.nc
+}
+
 func (c *Client) subscribeCommands() error {
 	// drone.<id>.arm
 	sub, err := c.nc.Subscribe("drone.*.arm", c.handleArm)
