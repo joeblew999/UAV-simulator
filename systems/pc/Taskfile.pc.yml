@@ -4,7 +4,7 @@ vars:
   ROOT_DIR: '{{.ROOT_DIR | default "."}}'
   BIN_DIR: '{{.ROOT_DIR}}/.bin'
   EXE_EXT: '{{if eq OS "windows"}}.exe{{end}}'
-  PROCESS_COMPOSE_BIN: '{{.BIN_DIR}}/process-compose{{.EXE_EXT}}'
+  PROCESS_COMPOSE_BIN_DIR: '{{.BIN_DIR}}/process-compose{{.EXE_EXT}}'
 
 tasks:
   default:
@@ -18,7 +18,7 @@ tasks:
       - echo "=== Process Compose Vars ==="
       - echo "ROOT_DIR={{.ROOT_DIR}}"
       - echo "BIN_DIR={{.BIN_DIR}}"
-      - echo "PROCESS_COMPOSE_BIN={{.PROCESS_COMPOSE_BIN}}"
+      - echo "PROCESS_COMPOSE_BIN_DIR={{.PROCESS_COMPOSE_BIN_DIR}}"
       - echo ""
       - echo "=== Env ==="
       - echo "PC_PORT=$PC_PORT"
@@ -27,7 +27,7 @@ tasks:
   deps:install:
     desc: Install process-compose
     status:
-      - test -f {{.PROCESS_COMPOSE_BIN}}
+      - test -f {{.PROCESS_COMPOSE_BIN_DIR}}
     cmds:
       - mkdir -p {{.BIN_DIR}}
       - sh -c "$(curl --location https://raw.githubusercontent.com/F1bonacc1/process-compose/main/scripts/get-pc.sh)" -- -d -b {{.BIN_DIR}}
@@ -35,29 +35,29 @@ tasks:
   deps:clean:
     desc: Remove process-compose binary
     cmds:
-      - rm -f {{.PROCESS_COMPOSE_BIN}}
+      - rm -f {{.PROCESS_COMPOSE_BIN_DIR}}
 
   up:
     desc: Start NATS + Simulator together (process-compose)
     cmds:
-      - '{{.PROCESS_COMPOSE_BIN}} up --port $PC_PORT'
+      - '{{.PROCESS_COMPOSE_BIN_DIR}} up --port $PC_PORT'
 
   up:bg:
     desc: Start NATS + Simulator in background
     cmds:
-      - '{{.PROCESS_COMPOSE_BIN}} up -d -t=false --port $PC_PORT'
+      - '{{.PROCESS_COMPOSE_BIN_DIR}} up -d -t=false --port $PC_PORT'
 
   up:headless:
     desc: Start NATS + Simulator without TUI (for CI/testing)
     cmds:
-      - '{{.PROCESS_COMPOSE_BIN}} up -t=false --port $PC_PORT'
+      - '{{.PROCESS_COMPOSE_BIN_DIR}} up -t=false --port $PC_PORT'
 
   down:
     desc: Stop all process-compose services
     cmds:
-      - '{{.PROCESS_COMPOSE_BIN}} down'
+      - '{{.PROCESS_COMPOSE_BIN_DIR}} down'
 
   attach:
     desc: Attach to running process-compose TUI
     cmds:
-      - '{{.PROCESS_COMPOSE_BIN}} attach'
+      - '{{.PROCESS_COMPOSE_BIN_DIR}} attach'
