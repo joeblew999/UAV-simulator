@@ -23,3 +23,10 @@ processes:
   #   depends_on:
   #     nats-server:
   #       condition: process_healthy
+
+  # Voxel-fun 3D visualizer
+  voxel:
+    command: task voxel:run
+    depends_on:
+      nats-server:
+        condition: process_healthy

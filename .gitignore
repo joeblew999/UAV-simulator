@@ -65,3 +65,4 @@ Icon
 # Task local directories
 .bin/
 .data/
+.src/

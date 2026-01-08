@@ -2,6 +2,9 @@ version: '3'
 
 dotenv: ['.env']
 
+includes:
+  voxel: ./Taskfile.voxel.yml
+
 vars:
   BIN_DIR: .bin
   DATA_DIR: .data
