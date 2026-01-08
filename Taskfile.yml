@@ -1,0 +1,110 @@
+version: '3'
+
+tasks:
+  default:
+    desc: Run the simulator with GUI
+    cmds:
+      - go run .
+
+  build:
+    desc: Build the simulator binary
+    cmds:
+      - go build -o drone-simulator .
+
+  test:
+    desc: Run all tests
+    cmds:
+      - go test ./...
+
+  test:cover:
+    desc: Run tests with coverage
+    cmds:
+      - go test -cover ./...
+
+  test:verbose:
+    desc: Run tests with verbose output
+    cmds:
+      - go test -v ./...
+
+  vet:
+    desc: Run static analysis
+    cmds:
+      - go vet ./...
+
+  fmt:
+    desc: Format all Go code
+    cmds:
+      - go fmt ./...
+
+  lint:
+    desc: Run fmt and vet
+    cmds:
+      - task: fmt
+      - task: vet
+
+  headless:
+    desc: Run headless benchmark (1000 steps)
+    cmds:
+      - go run . -headless -steps=1000 -ups=120
+
+  headless:long:
+    desc: Run longer headless benchmark (10s)
+    cmds:
+      - go run . -headless -duration=10s -ups=240
+
+  clean:
+    desc: Remove build artifacts
+    cmds:
+      - rm -f drone-simulator
+
+  deps:
+    desc: Download and tidy dependencies
+    cmds:
+      - go mod tidy
+
+  # NATS tasks
+  nats:install:
+    desc: Install NATS server and CLI (macOS)
+    cmds:
+      - brew install nats-server
+      - brew install nats-io/nats-tools/nats
+
+  nats:start:
+    desc: Start NATS server locally (foreground with debug)
+    cmds:
+      - nats-server -DV
+
+  nats:start:bg:
+    desc: Start NATS server in background
+    cmds:
+      - nats-server -D &
+
+  nats:sub:
+    desc: Subscribe to all drone telemetry (for testing)
+    cmds:
+      - nats sub "uav.>"
+
+  nats:status:
+    desc: Check NATS server status
+    cmds:
+      - nats server ping
+
+  # Development workflow
+  dev:
+    desc: Run with decoupled physics/render (default)
+    cmds:
+      - go run . -decoupled=true
+
+  dev:legacy:
+    desc: Run with coupled loop (legacy mode)
+    cmds:
+      - go run . -decoupled=false
+
+  ci:
+    desc: Run full CI pipeline locally
+    cmds:
+      - task: deps
+      - task: fmt
+      - task: vet
+      - task: test
+      - task: headless
