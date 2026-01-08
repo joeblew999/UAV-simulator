@@ -1,0 +1,54 @@
+version: '3'
+
+vars:
+  ROOT_DIR: '{{.ROOT_DIR | default "."}}'
+  BIN_DIR: '{{.ROOT_DIR}}/.bin'
+  EXE_EXT: '{{if eq OS "windows"}}.exe{{end}}'
+  NATS_CLI_BIN: '{{.BIN_DIR}}/nats{{.EXE_EXT}}'
+
+tasks:
+  debug:
+    desc: Print all vars and env for debugging
+    cmds:
+      - echo "=== NATS CLI Vars ==="
+      - echo "ROOT_DIR={{.ROOT_DIR}}"
+      - echo "BIN_DIR={{.BIN_DIR}}"
+      - echo "NATS_CLI_BIN={{.NATS_CLI_BIN}}"
+      - echo ""
+      - echo "=== Env ==="
+      - echo "NATS_URL=$NATS_URL"
+    silent: true
+
+  deps:install:
+    desc: Install NATS CLI
+    status:
+      - test -f {{.NATS_CLI_BIN}}
+    cmds:
+      - mkdir -p {{.BIN_DIR}}
+      - GOBIN={{.BIN_DIR}} go install github.com/nats-io/natscli/nats@latest
+
+  deps:clean:
+    desc: Remove NATS CLI binary
+    cmds:
+      - rm -f {{.NATS_CLI_BIN}}
+
+  rtt:
+    desc: Check NATS server round-trip time
+    deps:
+      - deps:install
+    cmds:
+      - '{{.NATS_CLI_BIN}} rtt --server $NATS_URL'
+
+  sub:
+    desc: Subscribe to all drone telemetry
+    deps:
+      - deps:install
+    cmds:
+      - '{{.NATS_CLI_BIN}} sub "drone.>"'
+
+  pub:
+    desc: Publish a message (usage - task nats-cli:pub -- drone.0.arm '')
+    deps:
+      - deps:install
+    cmds:
+      - '{{.NATS_CLI_BIN}} pub {{.CLI_ARGS}}'

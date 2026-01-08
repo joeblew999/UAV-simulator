@@ -1,0 +1,16 @@
+# narun-gw configuration for UAV simulator
+# Routes HTTP requests to NATS services
+# Environment variables are substituted at runtime via envsubst
+
+nats_url: "${NATS_URL}"
+server_addr: ":${NARUN_PORT}"
+metrics_addr: ":${NARUN_METRICS_PORT}"
+request_timeout_seconds: 30
+
+# Route HTTP requests to NATS services
+# Note: narun-gw uses NATS Micro services, not raw pub/sub
+# The simulator would need to implement NATS Micro service handlers
+routes:
+  - path: "/drone/"
+    methods: ["POST"]
+    service: "drone"

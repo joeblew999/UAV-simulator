@@ -5,15 +5,15 @@ env_file: .env
 
 processes:
   nats-server:
-    command: task nats:start
+    command: task nats-server:start
     readiness_probe:
       exec:
-        command: task nats:status
+        command: task nats-cli:rtt
       initial_delay_seconds: 1
       period_seconds: 2
 
-  simulator:
-    command: task sim:run
+  main:
+    command: task main:start
     depends_on:
       nats-server:
         condition: process_healthy
@@ -22,7 +22,7 @@ processes:
 
   # Optional: telemetry watcher (uncomment to auto-subscribe)
   # telemetry:
-  #   command: task nats:sub
+  #   command: task nats-cli:sub
   #   depends_on:
   #     nats-server:
   #       condition: process_healthy
@@ -30,6 +30,13 @@ processes:
   # Voxel-fun 3D visualizer
   voxel:
     command: task voxel:start
+    depends_on:
+      nats-server:
+        condition: process_healthy
+
+  # Narun HTTP/gRPC gateway to NATS
+  narun:
+    command: task narun:start
     depends_on:
       nats-server:
         condition: process_healthy

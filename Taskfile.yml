@@ -7,8 +7,12 @@ includes:
     taskfile: ./systems/voxel/Taskfile.voxel.yml
     vars:
       ROOT_DIR: '{{.PWD}}'
-  nats:
-    taskfile: ./systems/nats/Taskfile.nats.yml
+  nats-server:
+    taskfile: ./systems/nats-server/Taskfile.nats-server.yml
+    vars:
+      ROOT_DIR: '{{.PWD}}'
+  nats-cli:
+    taskfile: ./systems/nats-cli/Taskfile.nats-cli.yml
     vars:
       ROOT_DIR: '{{.PWD}}'
   narun:
@@ -24,12 +28,13 @@ vars:
   # globals
   BIN_DIR: .bin
   DATA_DIR: .data
+  SRC_DIR: .src
 
 tasks:
   default:
     desc: Run the simulator with GUI
     cmds:
-      - task: sim:run
+      - task: main:start
 
   debug:
     desc: Print all vars and env for debugging
@@ -37,10 +42,14 @@ tasks:
       - echo "=== Vars ==="
       - echo "BIN_DIR={{.BIN_DIR}}"
       - echo "DATA_DIR={{.DATA_DIR}}"
+      - echo "SRC_DIR={{.SRC_DIR}}"
       - echo ""
       - echo "=== Env (.env) ==="
       - echo "NATS_PORT=$NATS_PORT"
       - echo "NATS_URL=$NATS_URL"
+      - echo "VOXEL_PORT=$VOXEL_PORT"
+      - echo "NARUN_PORT=$NARUN_PORT"
+      - echo "NARUN_METRICS_PORT=$NARUN_METRICS_PORT"
     silent: true
 
   # Go tasks
@@ -93,10 +102,11 @@ tasks:
 
   # Deps tasks
   deps:install:
-    desc: Install all external dependencies (process-compose, nats, voxel)
+    desc: Install all external dependencies (process-compose, nats-server, nats-cli, voxel)
     deps:
       - pc:deps:install
-      - nats:deps:install
+      - nats-server:deps:install
+      - nats-cli:deps:install
       - voxel:deps:install
 
   deps:clean:
@@ -104,19 +114,34 @@ tasks:
     cmds:
       - rm -rf {{.BIN_DIR}}
 
-  # Simulator tasks (called by process-compose)
-  sim:run:
-    desc: Run simulator with NATS enabled (called by process-compose)
+  # Main simulator tasks (called by process-compose)
+  main:debug:
+    desc: Print main simulator info
+    cmds:
+      - 'echo "=== Main Simulator ==="'
+      - 'echo "Binary: go run ."'
+      - 'echo "NATS_URL=$NATS_URL"'
+      - 'echo ""'
+      - 'echo "Flags:"'
+      - 'echo "  -headless     Run without GUI"'
+      - 'echo "  -nats-url     NATS server URL"'
+      - 'echo "  -steps=N      Fixed update count (headless)"'
+      - 'echo "  -duration=5s  Run duration (headless)"'
+      - 'echo "  -ups=120      Updates per second"'
+    silent: true
+
+  main:start:
+    desc: Start simulator with NATS enabled
     cmds:
       - go run . -nats-url=$NATS_URL
 
-  sim:run:headless:
-    desc: Run simulator headless with NATS (called by process-compose)
+  main:start:headless:
+    desc: Start simulator headless with NATS
     cmds:
       - go run . -nats-url=$NATS_URL -headless
 
-  sim:run:standalone:
-    desc: Run simulator with GUI (no NATS)
+  main:start:standalone:
+    desc: Start simulator with GUI (no NATS)
     cmds:
       - go run .
 

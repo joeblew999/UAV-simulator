@@ -1,118 +1,37 @@
-# NATS Integration
+# nats
 
-https://github.com/pawel-dubiel/UAV-simulator is the origin
-
-Adding nats to:
-https://github.com/joeblew999/UAV-simulator
+Go NATS client for the UAV simulator.
 
 ## Why
 
-Integrate NATS messaging so any external agent (including Claude) can control the drone simulator via NATS CLI. This enables AI-driven flight control, automated testing, and remote operation.
+Connects the simulator to NATS for pub/sub messaging. Publishes drone telemetry and subscribes to control commands, enabling AI-driven flight control and remote operation.
 
 ## How
 
-You only need Taskfile to run everything.
+This is Go code, part of the main module. Imported as:
 
-https://taskfile.dev/installation
-
-We use Taskfile and Process Compose to run everything.
-This keeps development localised fully with idempotency and single source of truth.
-
-**Architecture:** Task → Process Compose → Task
-
-We use `.env` and expose that to Task and Process Compose for config like NATS_PORT, NATS_URL, etc.
-
-### Quick Start
-
-```sh
-# Start everything (NATS + Simulator with GUI)
-task pc:up
-
-# Stop everything
-task pc:down
-
-# Start in background
-task pc:up:bg
-
-# Attach to running TUI
-task pc:attach
-
-# Start without TUI (for CI/testing)
-task pc:up:headless
+```go
+import natsclient "drone-simulator/systems/nats"
 ```
 
-### Control Drones via NATS
+Wired in via `main.go` with the `-nats-url` flag.
 
-```sh
-# Arm drone 0
-nats pub drone.0.arm ''
+## Commands
 
-# Take off to 5 meters
-nats pub drone.0.takeoff '{"altitude": 5}'
+| Subject | Payload | Description |
+|---------|---------|-------------|
+| `drone.<id>.arm` | `''` | Arm the drone |
+| `drone.<id>.disarm` | `''` | Disarm the drone |
+| `drone.<id>.takeoff` | `{"altitude": 5}` | Take off to altitude (m) |
+| `drone.<id>.land` | `''` | Land at current position |
+| `drone.<id>.goto` | `{"x": 0, "y": 10, "z": 0}` | Fly to altitude (lateral X/Z not yet supported) |
+| `drone.<id>.input` | `{"throttle": 0.5, ...}` | Direct control |
+| `drone.<id>.mode` | `{"mode": "Hover"}` | Set flight mode |
+| `drone.<id>.stop` | `''` | Emergency stop |
 
-# Fly to altitude (y) - lateral positioning not yet supported
-nats pub drone.0.goto '{"x": 0, "y": 10, "z": 0}'
+## Telemetry
 
-# Set throttle/yaw/pitch/roll directly
-nats pub drone.0.input '{"throttle": 0.6, "yaw": 0, "pitch": 0, "roll": 0}'
-
-# Change flight mode (Manual, AltitudeHold, Hover)
-nats pub drone.0.mode '{"mode": "Hover"}'
-
-# Land
-nats pub drone.0.land ''
-
-# Disarm
-nats pub drone.0.disarm ''
-
-# Emergency stop
-nats pub drone.0.stop ''
-```
-
-### Monitor Telemetry
-
-```sh
-# Watch single drone
-nats sub drone.0.telemetry
-
-# Watch all drones
-nats sub "drone.*.telemetry"
-
-# Using task helper
-task nats:sub
-```
-
-### Other Useful Commands
-
-```sh
-# Debug - print all vars and env
-task debug
-
-# Check NATS server status
-task nats:status
-
-# Run simulator standalone (no NATS)
-task sim:run:standalone
-
-# Run tests
-task go:test
-```
-
-### Dependencies
-
-Dependencies are installed automatically and idempotently to `.bin/`:
-
-```sh
-# Install all deps (process-compose, nats-server, nats-cli)
-task deps:install
-
-# Clean all deps
-task deps:clean
-```
-
-## Telemetry Format
-
-Telemetry is published at 10Hz on `drone.<id>.telemetry`:
+Published at 10Hz on `drone.<id>.telemetry`:
 
 ```json
 {
@@ -130,45 +49,11 @@ Telemetry is published at 10Hz on `drone.<id>.telemetry`:
 }
 ```
 
-## Command Reference
-
-| Subject | Payload | Description |
-|---------|---------|-------------|
-| `drone.<id>.arm` | `''` | Arm the drone |
-| `drone.<id>.disarm` | `''` | Disarm the drone |
-| `drone.<id>.takeoff` | `{"altitude": 5}` | Take off to altitude (m) |
-| `drone.<id>.land` | `''` | Land at current position |
-| `drone.<id>.goto` | `{"x": 0, "y": 10, "z": 0}` | Fly to altitude (lateral X/Z not yet supported) |
-| `drone.<id>.input` | `{"throttle": 0.5, "yaw": 0, "pitch": 0, "roll": 0}` | Direct control |
-| `drone.<id>.mode` | `{"mode": "Hover"}` | Set flight mode |
-| `drone.<id>.stop` | `''` | Emergency stop (disarm + zero throttle) |
-
-## Example: Claude Controlling Drones
-
-```bash
-# 1. Start simulator
-task pc:up
-
-# 2. In separate terminal, Claude controls drones:
-nats pub drone.0.arm ''
-nats pub drone.0.takeoff '{"altitude": 5}'
-
-# 3. Wait for altitude, then change altitude
-nats pub drone.0.goto '{"x": 0, "y": 10, "z": 0}'
-
-# 4. Monitor telemetry
-nats sub drone.0.telemetry --count=1
-
-# 5. Land when done
-nats pub drone.0.land ''
-```
-
 ## Implementation
 
-- **Client**: `internal/nats/client.go`
-- **Wired in**: `main.go` (via `-nats-url` flag)
-- **Thread-safe**: Uses `Simulator.Lock()/Unlock()` for command execution
-- **Telemetry rate**: 10Hz (configurable in client)
-- **Graceful degradation**: Simulator works without NATS if not configured
+- **File**: `systems/nats/client.go`
+- **Thread-safe**: Uses `Simulator.Lock()/Unlock()`
+- **Telemetry rate**: 10Hz (configurable)
+- **Graceful degradation**: Simulator works without NATS
 
-See [NATS_TODO.md](NATS_TODO.md) for roadmap and future features.
+See [TODO.md](TODO.md) for roadmap.

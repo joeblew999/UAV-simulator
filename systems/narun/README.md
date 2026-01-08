@@ -1,48 +1,40 @@
 # narun
 
+NATS-based microservice orchestration.
+
 https://github.com/akhenakh/narun
 
-## Why?
+## Why
 
-Narun is a NATS-based microservice orchestration platform. It could potentially be used to:
-- Execute functions triggered by NATS messages
-- Orchestrate multi-step drone missions
-- Run WebAssembly workloads triggered by drone events
-
-Currently exploring whether it's useful for the simulator or overkill for simple pub/sub.
+Narun can execute functions triggered by NATS messages, orchestrate multi-step drone missions, and run WebAssembly workloads. Exploring whether it's useful for the simulator.
 
 ## How
 
-Taskfile include with Process Compose running it.
-
-### Quick Start
-
 ```sh
-# Clone and build narun
-task narun:deps:install
-
-# Run narun (requires NATS server)
-task narun:run
-
-# Or start everything with process-compose
-task pc:up
+task narun:start        # Start narun gateway
+task narun:stop         # Stop narun
+task narun:deps:install # Clone and build narun binaries
+task narun:deps:clean   # Remove narun source and binaries
+task narun:debug        # Print debug info
 ```
 
-### Available Commands
+## Configuration
 
-```sh
-task narun:clone         # Clone repository to .src/narun
-task narun:pull          # Pull latest changes
-task narun:deps:install  # Build narun binary
-task narun:deps:clean    # Remove narun source directory
-task narun:run           # Run narun (connects to NATS)
-```
+- `NATS_URL` - NATS server URL
+- `NARUN_PORT` - Narun gateway port (default: 8080)
 
-## Architecture
+Source is cloned to `.src/narun/`, binaries go to `.bin/`.
 
-Narun connects to NATS and listens for function invocation requests. It can:
-- Run Go plugins
-- Execute WebAssembly modules
-- Schedule recurring tasks
+## macOS Limitation
 
-See the [narun repository](https://github.com/akhenakh/narun) for full documentation.
+**Note:** The `node-runner` component does not build on macOS due to a missing `runLauncher()` function in `launcher_other.go`. Only the CLI (`narun`) and gateway (`narun-gw`) are built.
+
+The issue is that `cmd/node-runner/main.go:59` calls `runLauncher()` which is only defined in:
+- `launcher_linux.go`
+- `launcher_freebsd.go`
+
+But `launcher_other.go` (used for macOS/Windows) only defines `runLandlockLauncher()`.
+
+**To file an issue:** https://github.com/akhenakh/narun/issues
+
+Suggested fix: Add a stub `runLauncher()` function to `launcher_other.go` that prints an error message about unsupported platform.
