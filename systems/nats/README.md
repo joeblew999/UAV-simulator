@@ -1,30 +1,20 @@
 # nats
 
-Go NATS client for the UAV simulator.
-
-## Why
-
-Connects the simulator to NATS for pub/sub messaging. Publishes drone telemetry and subscribes to control commands, enabling AI-driven flight control and remote operation.
-
-## How
-
-This is Go code, part of the main module. Imported as:
+Go NATS client for the simulator. Part of the main module.
 
 ```go
 import natsclient "drone-simulator/systems/nats"
 ```
 
-Wired in via `main.go` with the `-nats-url` flag.
-
 ## Commands
 
 | Subject | Payload | Description |
 |---------|---------|-------------|
-| `drone.<id>.arm` | `''` | Arm the drone |
-| `drone.<id>.disarm` | `''` | Disarm the drone |
-| `drone.<id>.takeoff` | `{"altitude": 5}` | Take off to altitude (m) |
-| `drone.<id>.land` | `''` | Land at current position |
-| `drone.<id>.goto` | `{"x": 0, "y": 10, "z": 0}` | Fly to altitude (lateral X/Z not yet supported) |
+| `drone.<id>.arm` | `''` | Arm drone |
+| `drone.<id>.disarm` | `''` | Disarm drone |
+| `drone.<id>.takeoff` | `{"altitude": 5}` | Take off |
+| `drone.<id>.land` | `''` | Land |
+| `drone.<id>.goto` | `{"x": 0, "y": 10, "z": 0}` | Fly to position |
 | `drone.<id>.input` | `{"throttle": 0.5, ...}` | Direct control |
 | `drone.<id>.mode` | `{"mode": "Hover"}` | Set flight mode |
 | `drone.<id>.stop` | `''` | Emergency stop |
@@ -53,7 +43,5 @@ Published at 10Hz on `drone.<id>.telemetry`:
 
 - **File**: `systems/nats/client.go`
 - **Thread-safe**: Uses `Simulator.Lock()/Unlock()`
-- **Telemetry rate**: 10Hz (configurable)
+- **Telemetry rate**: 10Hz
 - **Graceful degradation**: Simulator works without NATS
-
-See [TODO.md](TODO.md) for roadmap.

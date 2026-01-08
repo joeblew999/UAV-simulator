@@ -1,20 +1,16 @@
 # nats-cli
 
-NATS CLI tool for interacting with the NATS server.
+NATS CLI tool.
 
-## Why
-
-Provides command-line access to NATS for debugging, monitoring telemetry, and sending commands to drones.
-
-## How
+## Tasks
 
 ```sh
-task nats-cli:sub             # Subscribe to all drone telemetry
-task nats-cli:pub             # Publish a message
-task nats-cli:rtt             # Check server round-trip time
-task nats-cli:deps:install    # Install NATS CLI binary
-task nats-cli:deps:clean      # Remove CLI binary
-task nats-cli:debug           # Print debug info
+task nats-cli:sub              # Subscribe to drone telemetry
+task nats-cli:pub              # Publish a message
+task nats-cli:rtt              # Check server RTT
+task nats-cli:deps:install     # Install CLI binary
+task nats-cli:deps:clean       # Remove binary
+task nats-cli:debug:self       # Print debug info
 ```
 
 ## Examples
@@ -23,7 +19,7 @@ task nats-cli:debug           # Print debug info
 # Subscribe to all drone telemetry
 task nats-cli:sub
 
-# Publish a command
+# Publish commands
 task nats-cli:pub -- drone.0.arm ''
 task nats-cli:pub -- drone.0.takeoff '{"altitude": 5}'
 ```

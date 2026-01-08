@@ -1,66 +1,38 @@
 # CLAUDE.md
 
-## Project Overview
+Go-based 3D quadcopter physics simulator with OpenGL 4.1 rendering, realistic flight dynamics, and 20-drone swarm coordination.
 
-Go-based 3D quadcopter physics simulator with OpenGL 4.1 rendering, realistic flight dynamics, and 20-drone swarm coordination. Models a DJI Mini 2-equivalent drone (249g) with cascaded PID control, battery simulation, and spatial audio.
-
-
-**Architecture:** Task → Process Compose → Task
-
-We use `.env` and expose that to Task and Process Compose for config like NATS_PORT, NATS_URL, etc.
-
-### Quick Start
+## Quick Start
 
 ```sh
-# Start everything (NATS + Simulator with GUI)
-task pc:up
-
-# Stop everything
-task pc:down
-
-# Start in background
-task pc:up:bg
-
-# Attach to running TUI
-task pc:attach
-
-
-## cli
-
-### CLI Flags
-- `-headless` - Run without window (benchmarking)
-- `-steps=N` - Fixed update count (headless)
-- `-duration=5s` - Run duration (headless)
-- `-ups=120` - Updates per second (default: 120)
-- `-decoupled=true` - Separate physics/render loops (default)
-
-## Testing
-
-```bash
-go test ./...           # Run all tests
-go test -cover ./...    # With coverage
-go vet ./...            # Static analysis
+task pc:up      # Start everything (NATS + Simulator + Voxel + Narun)
+task pc:down    # Stop everything
+task pc:attach  # Attach to TUI
 ```
 
-Tests are in `test/` using `sim_test` package - headless compatible, no OpenGL deps.
+## CLI Flags
+
+- `-headless` - Run without window
+- `-steps=N` - Fixed update count (headless)
+- `-duration=5s` - Run duration (headless)
+- `-ups=120` - Updates per second
 
 ## Project Structure
 
 ```
-main.go                  # Entry point, window setup, flags
+main.go                  # Entry point, flags
 internal/sim/
-├── drone.go             # Physics model, PID control, engines (851 LOC)
-├── simulator.go         # Main loop, subsystem coordination (910 LOC)
-├── swarm.go             # Leader-follower formation control
-├── camera.go            # Follow/TopDown/FPV camera modes
-├── renderer.go          # OpenGL shaders, mesh rendering
-├── input.go             # Keyboard/mouse handling
-├── audio.go             # Rotor sound synthesis (thrust-based RPM)
-├── math.go              # Vec3, Mat4 utilities
-├── ui.go                # 2D HUD overlay
-└── avaudio/             # Platform audio (darwin=AVFoundation)
-test/                    # Unit tests (drone, math, swarm)
-cmd/headless/            # Headless benchmark binary
+├── drone.go             # Physics, PID control, engines
+├── simulator.go         # Main loop
+├── swarm.go             # Formation control
+├── camera.go            # Camera modes
+├── renderer.go          # OpenGL
+├── input.go             # Keyboard/mouse
+├── audio.go             # Rotor sound
+├── math.go              # Vec3, Mat4
+└── ui.go                # HUD overlay
+systems/                 # See SYSTEM.md
+test/                    # Unit tests
 ```
 
 ## Key Types
@@ -68,30 +40,15 @@ cmd/headless/            # Headless benchmark binary
 ```go
 type Drone struct {
     Position, Velocity, Rotation Vec3
-    PropSpeeds [4]float64          // Motor RPMs
-    Engines []Engine               // 4 rotors with thrust/torque
-    FlightMode FlightMode          // Manual, AltitudeHold, Hover
+    PropSpeeds [4]float64
+    Engines []Engine
+    FlightMode FlightMode
     PitchPID, RollPID, YawPID, AltitudePID PIDController
     IsArmed, OnGround, Destroyed bool
 }
-
-type Swarm struct {
-    drones []*Drone
-    latency float64                // Simulated 100ms comm delay
-    leaderIdx int
-}
 ```
 
-## Physics Model
-
-- **Gravity**: 9.81 m/s²
-- **Air density**: 1.225 kg/m³ (varies with altitude)
-- **Max thrust**: 2.5× weight across 4 engines
-- **Simulation**: 120 Hz fixed timestep, decoupled from render
-
-Update sequence: ground contact → air density → forces (gravity, thrust, drag) → altitude PID → integration → collision → angular motion
-
-## Controls (Runtime)
+## Controls
 
 - **Throttle**: W/S
 - **Yaw**: A/D
@@ -103,13 +60,16 @@ Update sequence: ground contact → air density → forces (gravity, thrust, dra
 - **Drone select**: [ / ]
 - **Flight modes**: 1/2/3
 
+## Commands
+
+```sh
+task main:test      # Run tests
+task main:lint      # fmt + vet
+task ci             # Full CI pipeline
+task debug:all      # Print all debug info
+```
+
 ## Code Style
 
-- Standard `go fmt`
-- Conventional Commits: `feat(scope):`, `refactor:`, `chore:`
-- Tests in separate `test/` directory with `sim_test` package
-- Physics/rendering cleanly separated
-
-## Active Development
-
-Recent focus: audio system (thrust-based RPM), vertical thrust tracking, physics refinements. See commits for patterns.
+- Conventional Commits: `feat:`, `fix:`, `refactor:`
+- See AGENTS.md for guidelines

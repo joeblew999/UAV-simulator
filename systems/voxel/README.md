@@ -1,25 +1,19 @@
 # voxel
 
-Voxel-fun 3D visualizer integration.
+Voxel-fun 3D visualizer. https://github.com/pawel-dubiel/voxel-fun
 
-https://github.com/pawel-dubiel/voxel-fun
-
-## Why
-
-Provides an alternative 3D visualization for the drone simulator using voxel graphics.
-
-## How
+## Tasks
 
 ```sh
-task voxel:start        # Start voxel-fun visualizer
-task voxel:stop         # Stop visualizer
-task voxel:deps:install # Clone and install dependencies
-task voxel:deps:clean   # Remove source directory
-task voxel:debug        # Print debug info
+task voxel:start         # Start visualizer
+task voxel:stop          # Stop visualizer
+task voxel:deps:install  # Clone and install
+task voxel:deps:clean    # Remove source
+task voxel:debug:self    # Print debug info
 ```
 
-## Configuration
+## Config
 
 - `VOXEL_PORT` - Dev server port (default: 5173)
 
-Source is cloned to `.src/voxel-fun/`.
+Source cloned to `.src/voxel-fun/`.

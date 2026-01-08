@@ -1,40 +1,25 @@
 # narun
 
-NATS-based microservice orchestration.
+HTTP/gRPC gateway to NATS. https://github.com/akhenakh/narun
 
-https://github.com/akhenakh/narun
-
-## Why
-
-Narun can execute functions triggered by NATS messages, orchestrate multi-step drone missions, and run WebAssembly workloads. Exploring whether it's useful for the simulator.
-
-## How
+## Tasks
 
 ```sh
-task narun:start        # Start narun gateway
-task narun:stop         # Stop narun
-task narun:deps:install # Clone and build narun binaries
-task narun:deps:clean   # Remove narun source and binaries
-task narun:debug        # Print debug info
+task narun:start         # Start gateway
+task narun:stop          # Stop gateway
+task narun:deps:install  # Clone and build
+task narun:deps:clean    # Remove source and binaries
+task narun:debug:self    # Print debug info
 ```
 
-## Configuration
+## Config
 
 - `NATS_URL` - NATS server URL
-- `NARUN_PORT` - Narun gateway port (default: 8080)
+- `NARUN_PORT` - Gateway port (default: 8081)
+- `NARUN_METRICS_PORT` - Metrics port (default: 9091)
 
-Source is cloned to `.src/narun/`, binaries go to `.bin/`.
+Source cloned to `.src/narun/`, binaries to `.bin/`.
 
-## macOS Limitation
+## macOS Note
 
-**Note:** The `node-runner` component does not build on macOS due to a missing `runLauncher()` function in `launcher_other.go`. Only the CLI (`narun`) and gateway (`narun-gw`) are built.
-
-The issue is that `cmd/node-runner/main.go:59` calls `runLauncher()` which is only defined in:
-- `launcher_linux.go`
-- `launcher_freebsd.go`
-
-But `launcher_other.go` (used for macOS/Windows) only defines `runLandlockLauncher()`.
-
-**To file an issue:** https://github.com/akhenakh/narun/issues
-
-Suggested fix: Add a stub `runLauncher()` function to `launcher_other.go` that prints an error message about unsupported platform.
+The `node-runner` component doesn't build on macOS (missing `runLauncher()` stub). Only `narun` CLI and `narun-gw` are built.
