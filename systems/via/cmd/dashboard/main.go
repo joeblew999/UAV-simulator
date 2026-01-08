@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -34,6 +35,50 @@ func main() {
 	v.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"status":"ok"}`))
+	})
+
+	// SSE proxy - avoids CORS issues by proxying nats2sse through same origin
+	v.HandleFunc("GET /sse", func(w http.ResponseWriter, r *http.Request) {
+		subject := r.URL.Query().Get("subject")
+		if subject == "" {
+			subject = "telemetry.>"
+		}
+
+		// Proxy to nats2sse
+		resp, err := http.Get(*sseURL + "/events?subject=" + subject)
+		if err != nil {
+			http.Error(w, "SSE upstream error", http.StatusBadGateway)
+			logger.Error("SSE proxy error", "error", err)
+			return
+		}
+		defer resp.Body.Close()
+
+		// Copy headers
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+
+		// Stream data
+		flusher, ok := w.(http.Flusher)
+		if !ok {
+			http.Error(w, "Streaming not supported", http.StatusInternalServerError)
+			return
+		}
+
+		buf := make([]byte, 4096)
+		for {
+			n, err := resp.Body.Read(buf)
+			if n > 0 {
+				w.Write(buf[:n])
+				flusher.Flush()
+			}
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				break
+			}
+		}
 	})
 
 	// Add CSS to head
@@ -125,9 +170,10 @@ body {
 `
 }
 
-func sseScript(sseURL string) string {
+func sseScript(_ string) string {
+	// Use local /sse proxy to avoid CORS issues
 	return `
-const evtSource = new EventSource('` + sseURL + `/events?subject=telemetry.>');
+const evtSource = new EventSource('/sse?subject=telemetry.>');
 evtSource.onopen = () => {
     const el = document.querySelector('[data-signals]');
     if (el && el.__datastar) el.__datastar.signals.sseConnected = true;
@@ -138,7 +184,17 @@ evtSource.onerror = () => {
 };
 evtSource.onmessage = (event) => {
     try {
-        const data = JSON.parse(event.data);
+        // nats2sse sends base64 encoded data with "processed: " prefix
+        let rawData = event.data;
+        try {
+            rawData = atob(event.data);
+            if (rawData.startsWith('processed: ')) {
+                rawData = rawData.substring(11);
+            }
+        } catch (e) {
+            // Not base64, use as-is
+        }
+        const data = JSON.parse(rawData);
         const el = document.querySelector('[data-signals]');
         if (el && el.__datastar) {
             const signals = el.__datastar.signals;
