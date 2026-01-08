@@ -4,13 +4,28 @@
 
 Go-based 3D quadcopter physics simulator with OpenGL 4.1 rendering, realistic flight dynamics, and 20-drone swarm coordination. Models a DJI Mini 2-equivalent drone (249g) with cascaded PID control, battery simulation, and spatial audio.
 
-## Build & Run
 
-```bash
-go build -o drone-simulator .    # Build
-go run .                         # Run with GUI
-go run . -headless -steps=1000   # Headless benchmark
-```
+**Architecture:** Task → Process Compose → Task
+
+We use `.env` and expose that to Task and Process Compose for config like NATS_PORT, NATS_URL, etc.
+
+### Quick Start
+
+```sh
+# Start everything (NATS + Simulator with GUI)
+task pc:up
+
+# Stop everything
+task pc:down
+
+# Start in background
+task pc:up:bg
+
+# Attach to running TUI
+task pc:attach
+
+
+## cli
 
 ### CLI Flags
 - `-headless` - Run without window (benchmarking)

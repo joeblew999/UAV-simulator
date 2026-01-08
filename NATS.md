@@ -1,15 +1,13 @@
 # NATS Integration
 
-https://github.com/pawel-dubiel/UAV-simulator is the origin ?
+https://github.com/pawel-dubiel/UAV-simulator is the origin
 
-Adding nats to :
+Adding nats to:
 https://github.com/joeblew999/UAV-simulator
-
-
 
 ## Why
 
-Integrate NATS messaging so or any external agent can control the drone simulator via NATS CLI. This enables AI-driven flight control, automated testing, and remote operation.
+Integrate NATS messaging so any external agent (including Claude) can control the drone simulator via NATS CLI. This enables AI-driven flight control, automated testing, and remote operation.
 
 ## How
 
@@ -43,14 +41,52 @@ task pc:attach
 task pc:up:headless
 ```
 
+### Control Drones via NATS
+
+```sh
+# Arm drone 0
+nats pub drone.0.arm ''
+
+# Take off to 5 meters
+nats pub drone.0.takeoff '{"altitude": 5}'
+
+# Fly to position (x, y, z)
+nats pub drone.0.goto '{"x": 10, "y": 5, "z": 10}'
+
+# Set throttle/yaw/pitch/roll directly
+nats pub drone.0.input '{"throttle": 0.6, "yaw": 0, "pitch": 0, "roll": 0}'
+
+# Change flight mode (Manual, AltitudeHold, Hover)
+nats pub drone.0.mode '{"mode": "Hover"}'
+
+# Land
+nats pub drone.0.land ''
+
+# Disarm
+nats pub drone.0.disarm ''
+
+# Emergency stop
+nats pub drone.0.stop ''
+```
+
+### Monitor Telemetry
+
+```sh
+# Watch single drone
+nats sub drone.0.telemetry
+
+# Watch all drones
+nats sub "drone.*.telemetry"
+
+# Using task helper
+task nats:sub
+```
+
 ### Other Useful Commands
 
 ```sh
 # Debug - print all vars and env
 task debug
-
-# Subscribe to all drone telemetry (separate terminal)
-task nats:sub
 
 # Check NATS server status
 task nats:status
@@ -72,129 +108,74 @@ task deps:install
 
 # Clean all deps
 task deps:clean
-``` 
-
-
-
-## Use Case: Claude Controlling Drones via NATS CLI
-
-```bash
-# Start everything (NATS server + Simulator with GUI)
-task pc:up
-
-# In a separate terminal, Claude can control drones:
-nats pub drone.0.arm ''                              # Arm drone 0
-nats pub drone.0.takeoff '{"altitude": 10}'          # Take off to 10m
-nats pub drone.0.goto '{"x": 5, "y": 10, "z": 5}'    # Fly to position
-nats pub drone.0.land ''                             # Land
-nats pub swarm.formation '{"type": "circle", "radius": 10}'
-
-# Monitor state:
-nats sub "drone.*.telemetry"                         # Watch all drones
-nats sub "simulator.status"                          # Simulator state
 ```
 
-## Tasks
+## Telemetry Format
 
-### Phase 1: Basic NATS Setup
-- [ ] Add NATS client dependency (`github.com/nats-io/nats.go`)
-- [ ] Create `internal/sim/nats.go` for NATS connection management
-- [ ] Add CLI flags: `-nats-url`, `-nats-enabled`
-- [ ] Implement connection lifecycle (connect, reconnect, disconnect)
-- [ ] Graceful degradation if NATS unavailable
+Telemetry is published at 10Hz on `drone.<id>.telemetry`:
 
-### Phase 2: Telemetry Publishing
-- [ ] Publish drone state on `drone.<id>.telemetry` (JSON)
-  - Position (x, y, z)
-  - Velocity
-  - Rotation (pitch, roll, yaw)
-  - Battery percentage
-  - Flight mode
-  - Armed/OnGround/Destroyed status
-- [ ] Publish at configurable rate (default: 10 Hz, flag: `-nats-telemetry-hz`)
-- [ ] Publish simulator status on `simulator.status`
-
-### Phase 3: Command Subscription (Core for Claude Control)
-- [ ] Subscribe to `drone.<id>.arm` - Arm specific drone
-- [ ] Subscribe to `drone.<id>.disarm` - Disarm specific drone
-- [ ] Subscribe to `drone.<id>.takeoff` - `{"altitude": 10}`
-- [ ] Subscribe to `drone.<id>.land` - Land at current position
-- [ ] Subscribe to `drone.<id>.goto` - `{"x": 0, "y": 10, "z": 0}`
-- [ ] Subscribe to `drone.<id>.input` - Direct control `{"throttle": 0.5, "yaw": 0, "pitch": 0, "roll": 0}`
-- [ ] Subscribe to `drone.<id>.mode` - `{"mode": "Hover"}` (Manual/AltitudeHold/Hover)
-- [ ] Subscribe to `drone.<id>.stop` - Emergency stop
-
-### Phase 4: Swarm Commands
-- [ ] Subscribe to `swarm.arm` - Arm all drones
-- [ ] Subscribe to `swarm.disarm` - Disarm all
-- [ ] Subscribe to `swarm.takeoff` - `{"altitude": 10}`
-- [ ] Subscribe to `swarm.land` - Land all
-- [ ] Subscribe to `swarm.formation` - `{"type": "line|circle|grid", ...params}`
-- [ ] Subscribe to `swarm.goto` - Move entire swarm
-
-### Phase 5: Request-Reply (for Claude to query state)
-- [ ] `drone.<id>.status` - Request current drone state, get reply
-- [ ] `swarm.status` - Request all drone states
-- [ ] `simulator.info` - Get simulator config/state
-
-## Message Schemas
-
-### Telemetry (drone.<id>.telemetry) - Published by Simulator
 ```json
 {
   "id": 0,
-  "timestamp": 1704672000000,
-  "position": {"x": 0.0, "y": 10.0, "z": 0.0},
-  "velocity": {"x": 0.0, "y": 0.0, "z": 0.0},
-  "rotation": {"pitch": 0.0, "roll": 0.0, "yaw": 0.0},
-  "battery": 0.95,
-  "flightMode": "Hover",
+  "timestamp": 1767853375086,
+  "position": {"x": 0, "y": 5.48, "z": 0},
+  "velocity": {"x": 0, "y": -1.36, "z": 0},
+  "rotation": {"x": 0, "y": 0, "z": 0},
+  "battery": 99.64,
+  "flightMode": "AltitudeHold",
+  "throttle": 75.89,
   "armed": true,
   "onGround": false,
   "destroyed": false
 }
 ```
 
-### Goto Command (drone.<id>.goto)
-```json
-{"x": 5.0, "y": 10.0, "z": 5.0}
-```
+## Command Reference
 
-### Takeoff Command (drone.<id>.takeoff)
-```json
-{"altitude": 10.0}
-```
+| Subject | Payload | Description |
+|---------|---------|-------------|
+| `drone.<id>.arm` | `''` | Arm the drone |
+| `drone.<id>.disarm` | `''` | Disarm the drone |
+| `drone.<id>.takeoff` | `{"altitude": 5}` | Take off to altitude (m) |
+| `drone.<id>.land` | `''` | Land at current position |
+| `drone.<id>.goto` | `{"x": 0, "y": 10, "z": 0}` | Fly to position |
+| `drone.<id>.input` | `{"throttle": 0.5, "yaw": 0, "pitch": 0, "roll": 0}` | Direct control |
+| `drone.<id>.mode` | `{"mode": "Hover"}` | Set flight mode |
+| `drone.<id>.stop` | `''` | Emergency stop (disarm + zero throttle) |
 
-### Formation Command (swarm.formation)
-```json
-{"type": "circle", "radius": 10.0, "altitude": 15.0}
-```
-
-### Direct Input (drone.<id>.input)
-```json
-{"throttle": 0.5, "yaw": 0.1, "pitch": 0.0, "roll": 0.0}
-```
-
-## Example Claude Workflow
-
-1. **Start simulator**: User runs `task pc:up`
-2. **Claude subscribes to telemetry**: `nats sub drone.0.telemetry`
-3. **Claude arms drone**: `nats pub drone.0.arm ''`
-4. **Claude commands takeoff**: `nats pub drone.0.takeoff '{"altitude":5}'`
-5. **Claude monitors altitude** via telemetry stream
-6. **Claude navigates**: `nats pub drone.0.goto '{"x":10,"y":5,"z":0}'`
-7. **Claude lands**: `nats pub drone.0.land ''`
-
-## Dependencies
+## Example: Claude Controlling Drones
 
 ```bash
-go get github.com/nats-io/nats.go
+# 1. Start simulator
+task pc:up
+
+# 2. In separate terminal, Claude controls drones:
+nats pub drone.0.arm ''
+nats pub drone.0.takeoff '{"altitude": 5}'
+
+# 3. Wait for altitude, then navigate
+nats pub drone.0.goto '{"x": 10, "y": 5, "z": 10}'
+
+# 4. Monitor telemetry
+nats sub drone.0.telemetry --count=1
+
+# 5. Land when done
+nats pub drone.0.land ''
 ```
 
-## Implementation Notes
+## Implementation
 
-- All commands are fire-and-forget (pub) except status queries (request-reply)
-- Thread-safe command queue in simulator to process NATS messages
-- JSON for simplicity (Claude can easily construct messages)
-- Empty payload `''` for simple commands (arm, disarm, land, stop)
-- Waypoint/goto commands should use the existing PID controllers
+- **Client**: `internal/nats/client.go`
+- **Wired in**: `main.go` (via `-nats-url` flag)
+- **Thread-safe**: Uses `Simulator.Lock()/Unlock()` for command execution
+- **Telemetry rate**: 10Hz (configurable in client)
+- **Graceful degradation**: Simulator works without NATS if not configured
+
+## Future: Swarm Commands
+
+- [ ] `swarm.arm` - Arm all drones
+- [ ] `swarm.disarm` - Disarm all
+- [ ] `swarm.takeoff` - `{"altitude": 10}`
+- [ ] `swarm.land` - Land all
+- [ ] `swarm.formation` - `{"type": "circle", "radius": 10}`
+- [ ] `swarm.goto` - Move entire swarm
