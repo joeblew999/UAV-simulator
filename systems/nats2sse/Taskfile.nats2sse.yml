@@ -4,8 +4,10 @@ vars:
   ROOT_DIR: '{{.ROOT_DIR | default "."}}'
   BIN_DIR: '{{.ROOT_DIR}}/.bin'
   SRC_DIR: '{{.ROOT_DIR}}/.src'
+  EXE_EXT: '{{if eq OS "windows"}}.exe{{end}}'
   NATS2SSE_DIR: '{{.SRC_DIR}}/nats2sse'
-  NATS2SSE_BIN: '{{.BIN_DIR}}/nats2sse'
+  NATS2SSE_BIN: '{{.BIN_DIR}}/nats2sse{{.EXE_EXT}}'
+  NATS2SSE_BIN_NAME: 'nats2sse{{.EXE_EXT}}'
   NATS2SSE_REPO: https://github.com/akhenakh/nats2sse.git
 
 tasks:
@@ -23,6 +25,7 @@ tasks:
       - echo "SRC_DIR={{.SRC_DIR}}"
       - echo "NATS2SSE_DIR={{.NATS2SSE_DIR}}"
       - echo "NATS2SSE_BIN={{.NATS2SSE_BIN}}"
+      - echo "NATS2SSE_BIN_NAME={{.NATS2SSE_BIN_NAME}}"
       - echo ""
       - echo "=== Env ==="
       - echo "NATS_URL=$NATS_URL"
@@ -63,4 +66,4 @@ tasks:
   stop:
     desc: Stop nats2sse
     cmds:
-      - pkill -f nats2sse || true
+      - pkill -f {{.NATS2SSE_BIN_NAME}} || true

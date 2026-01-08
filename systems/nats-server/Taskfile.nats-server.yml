@@ -6,6 +6,7 @@ vars:
   DATA_DIR: '{{.ROOT_DIR}}/.data'
   EXE_EXT: '{{if eq OS "windows"}}.exe{{end}}'
   NATS_SERVER_BIN: '{{.BIN_DIR}}/nats-server{{.EXE_EXT}}'
+  NATS_SERVER_BIN_NAME: 'nats-server{{.EXE_EXT}}'
   NATS_SERVER_DATA_DIR: '{{.DATA_DIR}}/nats-server'
 
 tasks:
@@ -54,7 +55,7 @@ tasks:
   stop:
     desc: Stop NATS server
     cmds:
-      - pkill -f nats-server || true
+      - pkill -f {{.NATS_SERVER_BIN_NAME}} || true
 
   status:
     desc: Check NATS server status (requires nats-cli)

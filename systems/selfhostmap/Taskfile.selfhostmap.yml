@@ -4,8 +4,10 @@ vars:
   ROOT_DIR: '{{.ROOT_DIR | default "."}}'
   BIN_DIR: '{{.ROOT_DIR}}/.bin'
   SRC_DIR: '{{.ROOT_DIR}}/.src'
+  EXE_EXT: '{{if eq OS "windows"}}.exe{{end}}'
   SELFHOSTMAP_DIR: '{{.SRC_DIR}}/selfhostmap'
-  SELFHOSTMAP_BIN: '{{.BIN_DIR}}/selfhostmap'
+  SELFHOSTMAP_BIN: '{{.BIN_DIR}}/selfhostmap{{.EXE_EXT}}'
+  SELFHOSTMAP_BIN_NAME: 'selfhostmap{{.EXE_EXT}}'
   SELFHOSTMAP_REPO: https://github.com/akhenakh/selfhostmap.git
 
 tasks:
@@ -23,6 +25,7 @@ tasks:
       - echo "SRC_DIR={{.SRC_DIR}}"
       - echo "SELFHOSTMAP_DIR={{.SELFHOSTMAP_DIR}}"
       - echo "SELFHOSTMAP_BIN={{.SELFHOSTMAP_BIN}}"
+      - echo "SELFHOSTMAP_BIN_NAME={{.SELFHOSTMAP_BIN_NAME}}"
       - echo ""
       - echo "=== Env ==="
       - echo "SELFHOSTMAP_PORT=$SELFHOSTMAP_PORT"
@@ -62,4 +65,4 @@ tasks:
   stop:
     desc: Stop selfhostmap server
     cmds:
-      - pkill -f selfhostmap || true
+      - pkill -f {{.SELFHOSTMAP_BIN_NAME}} || true

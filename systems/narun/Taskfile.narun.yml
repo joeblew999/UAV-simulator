@@ -5,12 +5,15 @@ vars:
   BIN_DIR: '{{.ROOT_DIR}}/.bin'
   SRC_DIR: '{{.ROOT_DIR}}/.src'
   DATA_DIR: '{{.ROOT_DIR}}/.data'
+  EXE_EXT: '{{if eq OS "windows"}}.exe{{end}}'
   NARUN_DIR: '{{.SRC_DIR}}/narun'
   NARUN_DATA_DIR: '{{.DATA_DIR}}/narun'
   NARUN_CONFIG_TEMPLATE: '{{.ROOT_DIR}}/systems/narun/config.yaml'
   NARUN_CONFIG: '{{.NARUN_DATA_DIR}}/config.yaml'
-  NARUN_CLI_BIN: '{{.BIN_DIR}}/narun'
-  NARUN_GW_BIN: '{{.BIN_DIR}}/narun-gw'
+  NARUN_CLI_BIN: '{{.BIN_DIR}}/narun{{.EXE_EXT}}'
+  NARUN_CLI_BIN_NAME: 'narun{{.EXE_EXT}}'
+  NARUN_GW_BIN: '{{.BIN_DIR}}/narun-gw{{.EXE_EXT}}'
+  NARUN_GW_BIN_NAME: 'narun-gw{{.EXE_EXT}}'
   NARUN_REPO: https://github.com/akhenakh/narun.git
 
 tasks:
@@ -84,4 +87,4 @@ tasks:
   stop:
     desc: Stop narun gateway
     cmds:
-      - pkill -f narun-gw || true
+      - pkill -f {{.NARUN_GW_BIN_NAME}} || true
