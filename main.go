@@ -24,9 +24,10 @@ func main() {
 	headless := flag.Bool("headless", false, "Run without a window for benchmarking")
 	steps := flag.Int("steps", 0, "Number of fixed updates to run in headless mode (0 = use duration)")
 	duration := flag.Duration("duration", 0, "How long to run in headless mode (e.g., 5s); ignored if steps > 0")
-    ups := flag.Int("ups", 120, "Fixed updates per second in headless mode")
-    decoupled := flag.Bool("decoupled", true, "Run decoupled simulation/render loops (default true; pass -decoupled=false for legacy loop)")
+	ups := flag.Int("ups", 120, "Fixed updates per second in headless mode")
+	decoupled := flag.Bool("decoupled", true, "Run decoupled simulation/render loops (default true; pass -decoupled=false for legacy loop)")
 	arm := flag.Bool("arm", true, "Auto-arm drones in headless mode")
+	natsURL := flag.String("nats-url", "", "NATS server URL (e.g., nats://localhost:4222)")
 	flag.Parse()
 
 	if *headless {
@@ -47,6 +48,12 @@ func main() {
 		fmt.Printf("Completed %d steps in %s (achieved ~%.1f UPS)\n", performed, elapsed.Truncate(time.Millisecond), achievedUPS)
 		fmt.Printf("Leader pos=(%.2f, %.2f, %.2f) battery=%.1f%% throttle=%.0f%%\n", ad.Position.X, ad.Position.Y, ad.Position.Z, ad.BatteryPercent, ad.ThrottlePercent)
 		return
+	}
+
+	// Connect to NATS if URL provided
+	if *natsURL != "" {
+		fmt.Printf("NATS URL: %s (integration pending)\n", *natsURL)
+		// TODO: Initialize NATS client
 	}
 
 	fmt.Println("Drone Simulator Starting...")

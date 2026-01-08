@@ -1,110 +1,209 @@
 version: '3'
 
+dotenv: ['.env']
+
+vars:
+  BIN_DIR: .bin
+  DATA_DIR: .data
+
+  EXE_EXT: '{{if eq OS "windows"}}.exe{{end}}'
+  PROCESS_COMPOSE: '{{.BIN_DIR}}/process-compose{{.EXE_EXT}}'
+  NATS_SERVER: '{{.BIN_DIR}}/nats-server{{.EXE_EXT}}'
+  NATS_CLI: '{{.BIN_DIR}}/nats{{.EXE_EXT}}'
+  NATS_DATA_DIR: '{{.DATA_DIR}}/nats'
+
 tasks:
   default:
     desc: Run the simulator with GUI
     cmds:
-      - go run .
+      - task: sim:run
 
-  build:
+  debug:
+    desc: Print all vars and env for debugging
+    cmds:
+      - echo "=== Vars ==="
+      - echo "BIN_DIR={{.BIN_DIR}}"
+      - echo "DATA_DIR={{.DATA_DIR}}"
+      - echo "NATS_DATA_DIR={{.NATS_DATA_DIR}}"
+      - echo "PROCESS_COMPOSE={{.PROCESS_COMPOSE}}"
+      - echo "NATS_SERVER={{.NATS_SERVER}}"
+      - echo "NATS_CLI={{.NATS_CLI}}"
+      - echo ""
+      - echo "=== Env (.env) ==="
+      - echo "NATS_PORT=$NATS_PORT"
+      - echo "NATS_URL=$NATS_URL"
+    silent: true
+
+  # Go tasks
+  go:build:
     desc: Build the simulator binary
     cmds:
-      - go build -o drone-simulator .
+      - mkdir -p {{.BIN_DIR}}
+      - go build -o {{.BIN_DIR}}/drone-simulator .
 
-  test:
+  go:test:
     desc: Run all tests
     cmds:
       - go test ./...
 
-  test:cover:
+  go:test:cover:
     desc: Run tests with coverage
     cmds:
       - go test -cover ./...
 
-  test:verbose:
+  go:test:verbose:
     desc: Run tests with verbose output
     cmds:
       - go test -v ./...
 
-  vet:
+  go:vet:
     desc: Run static analysis
     cmds:
       - go vet ./...
 
-  fmt:
+  go:fmt:
     desc: Format all Go code
     cmds:
       - go fmt ./...
 
-  lint:
+  go:lint:
     desc: Run fmt and vet
     cmds:
-      - task: fmt
-      - task: vet
+      - task: go:fmt
+      - task: go:vet
 
-  headless:
-    desc: Run headless benchmark (1000 steps)
-    cmds:
-      - go run . -headless -steps=1000 -ups=120
-
-  headless:long:
-    desc: Run longer headless benchmark (10s)
-    cmds:
-      - go run . -headless -duration=10s -ups=240
-
-  clean:
-    desc: Remove build artifacts
-    cmds:
-      - rm -f drone-simulator
-
-  deps:
+  go:tidy:
     desc: Download and tidy dependencies
     cmds:
       - go mod tidy
 
-  # NATS tasks
-  nats:install:
-    desc: Install NATS server and CLI (macOS)
+  go:clean:
+    desc: Remove build artifacts
     cmds:
-      - brew install nats-server
-      - brew install nats-io/nats-tools/nats
+      - rm -f {{.BIN_DIR}}/drone-simulator
 
+  # Deps tasks
+  deps:install:
+    desc: Install all external dependencies (process-compose, nats)
+    deps:
+      - deps:install:process-compose
+      - deps:install:nats-server
+      - deps:install:nats-cli
+
+  deps:install:process-compose:
+    desc: Install process-compose
+    status:
+      - test -f {{.PROCESS_COMPOSE}}
+    cmds:
+      - mkdir -p {{.BIN_DIR}}
+      - sh -c "$(curl --location https://raw.githubusercontent.com/F1bonacc1/process-compose/main/scripts/get-pc.sh)" -- -d -b {{.BIN_DIR}}
+
+  deps:install:nats-server:
+    desc: Install NATS server
+    status:
+      - test -f {{.NATS_SERVER}}
+    cmds:
+      - mkdir -p {{.BIN_DIR}}
+      - GOBIN={{.PWD}}/{{.BIN_DIR}} go install github.com/nats-io/nats-server/v2@latest
+
+  deps:install:nats-cli:
+    desc: Install NATS CLI
+    status:
+      - test -f {{.NATS_CLI}}
+    cmds:
+      - mkdir -p {{.BIN_DIR}}
+      - GOBIN={{.PWD}}/{{.BIN_DIR}} go install github.com/nats-io/natscli/nats@latest
+
+  deps:clean:
+    desc: Remove all installed dependencies
+    cmds:
+      - rm -rf {{.BIN_DIR}}
+
+  # NATS tasks (called by process-compose)
   nats:start:
-    desc: Start NATS server locally (foreground with debug)
+    desc: Start NATS server (called by process-compose)
+    deps:
+      - deps:install:nats-server
     cmds:
-      - nats-server -DV
-
-  nats:start:bg:
-    desc: Start NATS server in background
-    cmds:
-      - nats-server -D &
-
-  nats:sub:
-    desc: Subscribe to all drone telemetry (for testing)
-    cmds:
-      - nats sub "uav.>"
+      - mkdir -p {{.NATS_DATA_DIR}}
+      - '{{.NATS_SERVER}} -DV -p $NATS_PORT -js -sd {{.NATS_DATA_DIR}}'
 
   nats:status:
     desc: Check NATS server status
+    deps:
+      - deps:install:nats-cli
     cmds:
-      - nats server ping
+      - '{{.NATS_CLI}} rtt --server $NATS_URL'
 
-  # Development workflow
-  dev:
-    desc: Run with decoupled physics/render (default)
+  nats:stop:
+    desc: Stop NATS server
     cmds:
-      - go run . -decoupled=true
+      - pkill -f nats-server || true
 
-  dev:legacy:
-    desc: Run with coupled loop (legacy mode)
+  nats:sub:
+    desc: Subscribe to all drone telemetry
+    deps:
+      - deps:install:nats-cli
     cmds:
-      - go run . -decoupled=false
+      - '{{.NATS_CLI}} sub "uav.>"'
 
+  # Simulator tasks (called by process-compose)
+  sim:run:
+    desc: Run simulator with NATS enabled (called by process-compose)
+    cmds:
+      - go run . -nats-url=$NATS_URL
+
+  sim:run:headless:
+    desc: Run simulator headless with NATS (called by process-compose)
+    cmds:
+      - go run . -nats-url=$NATS_URL -headless
+
+  sim:run:standalone:
+    desc: Run simulator with GUI (no NATS)
+    cmds:
+      - go run .
+
+  # CI tasks
   ci:
     desc: Run full CI pipeline locally
     cmds:
-      - task: deps
-      - task: fmt
-      - task: vet
-      - task: test
-      - task: headless
+      - task: go:tidy
+      - task: go:fmt
+      - task: go:vet
+      - task: go:test
+
+  # Process Compose tasks
+  pc:up:
+    desc: Start NATS + Simulator together (process-compose)
+    deps:
+      - deps:install
+    cmds:
+      - '{{.PROCESS_COMPOSE}} up'
+
+  pc:up:bg:
+    desc: Start NATS + Simulator in background
+    deps:
+      - deps:install
+    cmds:
+      - '{{.PROCESS_COMPOSE}} up -d -t=false'
+
+  pc:up:headless:
+    desc: Start NATS + Simulator without TUI (for CI/testing)
+    deps:
+      - deps:install
+    cmds:
+      - '{{.PROCESS_COMPOSE}} up -t=false'
+
+  pc:down:
+    desc: Stop all process-compose services
+    deps:
+      - deps:install:process-compose
+    cmds:
+      - '{{.PROCESS_COMPOSE}} down'
+
+  pc:attach:
+    desc: Attach to running process-compose TUI
+    deps:
+      - deps:install:process-compose
+    cmds:
+      - '{{.PROCESS_COMPOSE}} attach'

@@ -61,3 +61,7 @@ Icon
 # Project-specific binaries
 /drone-simulator
 /test_triangle
+
+# Task local directories
+.bin/
+.data/

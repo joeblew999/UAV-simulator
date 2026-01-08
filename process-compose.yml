@@ -1,0 +1,25 @@
+version: "0.5"
+
+processes:
+  nats-server:
+    command: task nats:start
+    readiness_probe:
+      exec:
+        command: task nats:status
+      initial_delay_seconds: 1
+      period_seconds: 2
+
+  simulator:
+    command: task sim:run
+    depends_on:
+      nats-server:
+        condition: process_healthy
+    environment:
+      - TERM=xterm-256color
+
+  # Optional: telemetry watcher (uncomment to auto-subscribe)
+  # telemetry:
+  #   command: task nats:sub
+  #   depends_on:
+  #     nats-server:
+  #       condition: process_healthy
