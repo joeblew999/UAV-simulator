@@ -57,6 +57,7 @@ Icon
 # Env files (secrets)
 .env
 .env.*
+!.env.example
 
 # Project-specific binaries
 /drone-simulator

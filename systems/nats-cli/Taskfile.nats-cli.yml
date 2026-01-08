@@ -7,7 +7,12 @@ vars:
   NATS_CLI_BIN: '{{.BIN_DIR}}/nats{{.EXE_EXT}}'
 
 tasks:
-  debug:
+  default:
+    internal: true
+    cmds:
+      - task: debug:self
+
+  debug:self:
     desc: Print all vars and env for debugging
     cmds:
       - echo "=== NATS CLI Vars ==="

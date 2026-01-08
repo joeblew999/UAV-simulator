@@ -7,7 +7,12 @@ vars:
   VOXEL_REPO: https://github.com/pawel-dubiel/voxel-fun.git
 
 tasks:
-  debug:
+  default:
+    internal: true
+    cmds:
+      - task: debug:self
+
+  debug:self:
     desc: Print all vars for debugging
     cmds:
       - echo "=== Vars ==="

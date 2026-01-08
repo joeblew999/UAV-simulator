@@ -19,6 +19,7 @@ processes:
         condition: process_healthy
     environment:
       - TERM=xterm-256color
+    # No health check - GUI app, runs until closed
 
   # Optional: telemetry watcher (uncomment to auto-subscribe)
   # telemetry:
@@ -33,6 +34,13 @@ processes:
     depends_on:
       nats-server:
         condition: process_healthy
+    readiness_probe:
+      http_get:
+        host: localhost
+        port: $VOXEL_PORT
+        path: /
+      initial_delay_seconds: 3
+      period_seconds: 5
 
   # Narun HTTP/gRPC gateway to NATS
   narun:
@@ -40,3 +48,10 @@ processes:
     depends_on:
       nats-server:
         condition: process_healthy
+    readiness_probe:
+      http_get:
+        host: localhost
+        port: $NARUN_METRICS_PORT
+        path: /metrics
+      initial_delay_seconds: 2
+      period_seconds: 5

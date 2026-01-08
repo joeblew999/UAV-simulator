@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"runtime"
 	"time"
 
@@ -92,11 +93,15 @@ func main() {
 
 	simulator := sim.NewSimulator()
 
-	// Connect to NATS if URL provided
+	// Connect to NATS if URL provided (flag takes precedence, then env var)
+	natsAddr := *natsURL
+	if natsAddr == "" {
+		natsAddr = os.Getenv("NATS_URL")
+	}
 	var natsClient *natsclient.Client
-	if *natsURL != "" {
+	if natsAddr != "" {
 		var err error
-		natsClient, err = natsclient.New(*natsURL, simulator)
+		natsClient, err = natsclient.New(natsAddr, simulator)
 		if err != nil {
 			log.Printf("Warning: Failed to connect to NATS: %v", err)
 		} else {

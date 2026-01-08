@@ -9,7 +9,12 @@ vars:
   NATS_SERVER_DATA_DIR: '{{.DATA_DIR}}/nats-server'
 
 tasks:
-  debug:
+  default:
+    internal: true
+    cmds:
+      - task: debug:self
+
+  debug:self:
     desc: Print all vars and env for debugging
     cmds:
       - echo "=== NATS Server Vars ==="

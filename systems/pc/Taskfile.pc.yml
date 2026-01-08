@@ -7,7 +7,12 @@ vars:
   PROCESS_COMPOSE_BIN: '{{.BIN_DIR}}/process-compose{{.EXE_EXT}}'
 
 tasks:
-  debug:
+  default:
+    internal: true
+    cmds:
+      - task: debug:self
+
+  debug:self:
     desc: Print all vars for debugging
     cmds:
       - echo "=== Process Compose Vars ==="

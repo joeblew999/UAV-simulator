@@ -1,6 +1,7 @@
 version: '3'
 
-dotenv: ['.env']
+# Load .env first, then .env.local overrides (for secrets)
+dotenv: ['.env', '.env.local']
 
 includes:
   voxel:
@@ -25,7 +26,7 @@ includes:
       ROOT_DIR: '{{.PWD}}'
 
 vars:
-  # globals
+  # globals ( that all included stuff also uses)
   BIN_DIR: .bin
   DATA_DIR: .data
   SRC_DIR: .src
@@ -37,9 +38,9 @@ tasks:
       - task: main:start
 
   debug:
-    desc: Print all vars and env for debugging
+    desc: Print root vars and env
     cmds:
-      - echo "=== Vars ==="
+      - echo "=== Root Vars ==="
       - echo "BIN_DIR={{.BIN_DIR}}"
       - echo "DATA_DIR={{.DATA_DIR}}"
       - echo "SRC_DIR={{.SRC_DIR}}"
@@ -52,53 +53,16 @@ tasks:
       - echo "NARUN_METRICS_PORT=$NARUN_METRICS_PORT"
     silent: true
 
-  # Go tasks
-  go:build:
-    desc: Build the simulator binary
+  debug:all:
+    desc: Print debug info for all systems
     cmds:
-      - mkdir -p {{.BIN_DIR}}
-      - go build -o {{.BIN_DIR}}/drone-simulator .
-
-  go:test:
-    desc: Run all tests
-    cmds:
-      - go test ./...
-
-  go:test:cover:
-    desc: Run tests with coverage
-    cmds:
-      - go test -cover ./...
-
-  go:test:verbose:
-    desc: Run tests with verbose output
-    cmds:
-      - go test -v ./...
-
-  go:vet:
-    desc: Run static analysis
-    cmds:
-      - go vet ./...
-
-  go:fmt:
-    desc: Format all Go code
-    cmds:
-      - go fmt ./...
-
-  go:lint:
-    desc: Run fmt and vet
-    cmds:
-      - task: go:fmt
-      - task: go:vet
-
-  go:tidy:
-    desc: Download and tidy dependencies
-    cmds:
-      - go mod tidy
-
-  go:clean:
-    desc: Remove build artifacts
-    cmds:
-      - rm -f {{.BIN_DIR}}/drone-simulator
+      - task: debug
+      - task: debug:main
+      - task: nats-server:debug:self
+      - task: nats-cli:debug:self
+      - task: narun:debug:self
+      - task: voxel:debug:self
+      - task: pc:debug:self
 
   # Deps tasks
   deps:install:
@@ -114,8 +78,8 @@ tasks:
     cmds:
       - rm -rf {{.BIN_DIR}}
 
-  # Main simulator tasks (called by process-compose)
-  main:debug:
+  # Main simulator tasks
+  debug:main:
     desc: Print main simulator info
     cmds:
       - 'echo "=== Main Simulator ==="'
@@ -131,25 +95,72 @@ tasks:
     silent: true
 
   main:start:
-    desc: Start simulator with NATS enabled
+    desc: Start simulator with NATS enabled (uses NATS_URL from .env)
     cmds:
-      - go run . -nats-url=$NATS_URL
+      - go run .
 
   main:start:headless:
-    desc: Start simulator headless with NATS
+    desc: Start simulator headless with NATS (uses NATS_URL from .env)
     cmds:
-      - go run . -nats-url=$NATS_URL -headless
+      - go run . -headless
 
   main:start:standalone:
     desc: Start simulator with GUI (no NATS)
     cmds:
       - go run .
 
+  main:build:
+    desc: Build the simulator binary
+    cmds:
+      - mkdir -p {{.BIN_DIR}}
+      - go build -o {{.BIN_DIR}}/drone-simulator .
+
+  main:test:
+    desc: Run all tests
+    cmds:
+      - go test ./...
+
+  main:test:cover:
+    desc: Run tests with coverage
+    cmds:
+      - go test -cover ./...
+
+  main:test:verbose:
+    desc: Run tests with verbose output
+    cmds:
+      - go test -v ./...
+
+  main:vet:
+    desc: Run static analysis
+    cmds:
+      - go vet ./...
+
+  main:fmt:
+    desc: Format all Go code
+    cmds:
+      - go fmt ./...
+
+  main:lint:
+    desc: Run fmt and vet
+    cmds:
+      - task: main:fmt
+      - task: main:vet
+
+  main:tidy:
+    desc: Download and tidy dependencies
+    cmds:
+      - go mod tidy
+
+  main:clean:
+    desc: Remove build artifacts
+    cmds:
+      - rm -f {{.BIN_DIR}}/drone-simulator
+
   # CI tasks
   ci:
     desc: Run full CI pipeline locally
     cmds:
-      - task: go:tidy
-      - task: go:fmt
-      - task: go:vet
-      - task: go:test
+      - task: main:tidy
+      - task: main:fmt
+      - task: main:vet
+      - task: main:test

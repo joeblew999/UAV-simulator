@@ -14,7 +14,12 @@ vars:
   NARUN_REPO: https://github.com/akhenakh/narun.git
 
 tasks:
-  debug:
+  default:
+    internal: true
+    cmds:
+      - task: debug:self
+
+  debug:self:
     desc: Print all vars and env for debugging
     cmds:
       - echo "=== Vars ==="
