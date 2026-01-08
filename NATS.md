@@ -171,11 +171,4 @@ nats pub drone.0.land ''
 - **Telemetry rate**: 10Hz (configurable in client)
 - **Graceful degradation**: Simulator works without NATS if not configured
 
-## Future: Swarm Commands
-
-- [ ] `swarm.arm` - Arm all drones
-- [ ] `swarm.disarm` - Disarm all
-- [ ] `swarm.takeoff` - `{"altitude": 10}`
-- [ ] `swarm.land` - Land all
-- [ ] `swarm.formation` - `{"type": "circle", "radius": 10}`
-- [ ] `swarm.goto` - Move entire swarm
+See [NATS_TODO.md](NATS_TODO.md) for roadmap and future features.
