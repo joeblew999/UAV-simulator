@@ -35,10 +35,8 @@ processes:
       nats-server:
         condition: process_healthy
     readiness_probe:
-      http_get:
-        host: localhost
-        port: $VOXEL_PORT
-        path: /
+      exec:
+        command: 'curl -sf http://localhost:$VOXEL_PORT/ || exit 1'
       initial_delay_seconds: 3
       period_seconds: 5
 
@@ -49,9 +47,33 @@ processes:
       nats-server:
         condition: process_healthy
     readiness_probe:
-      http_get:
-        host: localhost
-        port: $NARUN_METRICS_PORT
-        path: /metrics
+      exec:
+        command: 'curl -sf http://localhost:$NARUN_PORT/health || curl -sf http://localhost:$NARUN_METRICS_PORT/metrics || exit 1'
+      initial_delay_seconds: 2
+      period_seconds: 5
+
+  # NATS to SSE bridge for browser real-time updates
+  nats2sse:
+    command: task nats2sse:start
+    depends_on:
+      nats-server:
+        condition: process_healthy
+    readiness_probe:
+      exec:
+        command: 'curl -sf http://localhost:$NATS2SSE_PORT/static/index.html || exit 1'
+      initial_delay_seconds: 3
+      period_seconds: 5
+
+  # Via Datastar dashboard
+  via:
+    command: task via:start
+    depends_on:
+      nats-server:
+        condition: process_healthy
+      nats2sse:
+        condition: process_healthy
+    readiness_probe:
+      exec:
+        command: 'curl -sf http://localhost:$VIA_PORT/health || exit 1'
       initial_delay_seconds: 2
       period_seconds: 5

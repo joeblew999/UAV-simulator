@@ -12,7 +12,7 @@ tasks:
     cmds:
       - task: debug:self
 
-  debug:self:
+  "debug:self":
     desc: Print all vars for debugging
     cmds:
       - echo "=== Process Compose Vars ==="
@@ -24,7 +24,7 @@ tasks:
       - echo "PC_PORT=$PC_PORT"
     silent: true
 
-  deps:install:
+  "deps:install":
     desc: Install process-compose
     status:
       - test -f {{.PROCESS_COMPOSE_BIN}}
@@ -32,7 +32,7 @@ tasks:
       - mkdir -p {{.BIN_DIR}}
       - sh -c "$(curl --location https://raw.githubusercontent.com/F1bonacc1/process-compose/main/scripts/get-pc.sh)" -- -d -b {{.BIN_DIR}}
 
-  deps:clean:
+  "deps:clean":
     desc: Remove process-compose binary
     cmds:
       - rm -f {{.PROCESS_COMPOSE_BIN}}
@@ -42,12 +42,12 @@ tasks:
     cmds:
       - '{{.PROCESS_COMPOSE_BIN}} up --port $PC_PORT'
 
-  up:bg:
+  "up:bg":
     desc: Start NATS + Simulator in background
     cmds:
-      - '{{.PROCESS_COMPOSE_BIN}} up -d -t=false --port $PC_PORT'
+      - '{{.PROCESS_COMPOSE_BIN}} up -D -t=false --port $PC_PORT'
 
-  up:headless:
+  "up:headless":
     desc: Start NATS + Simulator without TUI (for CI/testing)
     cmds:
       - '{{.PROCESS_COMPOSE_BIN}} up -t=false --port $PC_PORT'
@@ -61,3 +61,13 @@ tasks:
     desc: Attach to running process-compose TUI
     cmds:
       - '{{.PROCESS_COMPOSE_BIN}} attach'
+
+  logs:
+    desc: Show logs for a process (usage task pc:logs -- <process>)
+    cmds:
+      - '{{.PROCESS_COMPOSE_BIN}} process logs {{.CLI_ARGS}}'
+
+  "logs:all":
+    desc: Tail all process logs
+    cmds:
+      - 'tail -f /var/folders/pj/*/T/process-compose-*.log 2>/dev/null || echo "No log file found"'

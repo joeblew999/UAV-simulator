@@ -1,5 +1,8 @@
 version: '3'
 
+env:
+  GOWORK: 'off'
+
 # Load .env first, then .env.local overrides (for secrets)
 dotenv: ['.env', '.env.local']
 
