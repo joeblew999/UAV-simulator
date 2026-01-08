@@ -54,10 +54,8 @@ Icon
 .Spotlight-V100
 .Trashes
 
-# Env files (secrets)
-.env
-.env.*
-!.env.example
+# Env files - .env is tracked with defaults, .env.local has secrets
+.env.local
 
 # Project-specific binaries
 /drone-simulator
