@@ -127,7 +127,7 @@ body {
 
 func sseScript(sseURL string) string {
 	return `
-const evtSource = new EventSource('` + sseURL + `/events?subject=drone.>');
+const evtSource = new EventSource('` + sseURL + `/events?subject=telemetry.>');
 evtSource.onopen = () => {
     const el = document.querySelector('[data-signals]');
     if (el && el.__datastar) el.__datastar.signals.sseConnected = true;

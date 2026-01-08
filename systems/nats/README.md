@@ -21,7 +21,7 @@ import natsclient "drone-simulator/systems/nats"
 
 ## Telemetry
 
-Published at 10Hz on `drone.<id>.telemetry`:
+Published at 10Hz on `telemetry.<id>` (for SSE via nats2sse):
 
 ```json
 {

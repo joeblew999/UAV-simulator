@@ -454,8 +454,7 @@ func (c *Client) publishTelemetry() {
 			continue
 		}
 
-		subject := fmt.Sprintf("drone.%d.telemetry", i)
-		c.nc.Publish(subject, data)
+		c.nc.Publish(TelemetrySubject(i), data)
 	}
 	c.simulator.RUnlock()
 }
