@@ -32,6 +32,10 @@ includes:
     taskfile: ./systems/selfhostmap/Taskfile.selfhostmap.yml
     vars:
       ROOT_DIR: '{{.PWD}}'
+  via:
+    taskfile: ./systems/via/Taskfile.via.yml
+    vars:
+      ROOT_DIR: '{{.PWD}}'
 
 vars:
   # globals ( that all included stuff also uses)
@@ -61,6 +65,7 @@ tasks:
       - echo "NARUN_METRICS_PORT=$NARUN_METRICS_PORT"
       - echo "PC_PORT=$PC_PORT"
       - echo "NATS2SSE_PORT=$NATS2SSE_PORT"
+      - echo "VIA_PORT=$VIA_PORT"
       - echo "SELFHOSTMAP_PORT=$SELFHOSTMAP_PORT"
     silent: true
 
@@ -75,6 +80,7 @@ tasks:
       - task: voxel:debug:self
       - task: pc:debug:self
       - task: nats2sse:debug:self
+      - task: via:debug:self
       - task: selfhostmap:debug:self
 
   # Deps tasks

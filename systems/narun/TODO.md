@@ -67,19 +67,34 @@ Browser (Datastar/HTMX)
 - https://github.com/nicois/via
 - https://data-star.dev/
 
-**NATS → SSE Flow (via nats2sse):**
+**Architecture:**
 ```
-NATS (drone.*.telemetry)
-        ↓ subscribe
-    nats2sse (:8083)
-        ↓ Server-Sent Events
-    Browser (Datastar)
-        ↓ reactive updates
-    DOM (gauges, positions, status)
+┌─────────────────┐     ┌─────────────────┐
+│  Via Server     │     │  nats2sse       │
+│  (:8084)        │     │  (:8083)        │
+│  - Templates    │     │  - NATS → SSE   │
+│  - Datastar     │     │                 │
+└────────┬────────┘     └────────┬────────┘
+         │ HTTP POST             │ SSE (telemetry)
+         ▼                       ▼
+    ┌─────────────────────────────────────┐
+    │           Browser (Datastar)        │
+    │  - Control buttons → Via → narun-gw │
+    │  - Telemetry ← nats2sse SSE stream  │
+    └─────────────────────────────────────┘
+         │                       ▲
+         ▼ NATS Micro            │ NATS pub
+    ┌─────────────────┐     ┌────┴────────┐
+    │  narun-gw       │     │  Simulator  │
+    │  (:8081)        │────▶│  (Go)       │
+    └─────────────────┘     └─────────────┘
 ```
 
-https://github.com/akhenakh/nats2sse - bridges NATS subjects to SSE streams.
-Perfect for Datastar's real-time updates without polling.
+- **Via** serves the dashboard HTML + handles control actions
+- **nats2sse** streams real-time telemetry to browser via SSE
+- **narun-gw** routes HTTP commands to NATS Micro service
+- https://github.com/nicois/via
+- https://github.com/akhenakh/nats2sse
 
 ### Phase 3: Voxel Integration
 - [ ] Connect voxel-fun to narun-gw

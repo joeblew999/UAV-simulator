@@ -61,7 +61,7 @@ tasks:
     deps:
       - deps:install
     cmds:
-      - '{{.NATS2SSE_BIN}} -nats-url $NATS_URL -addr :$NATS2SSE_PORT'
+      - '{{.NATS2SSE_BIN}} -nats_url $NATS_URL -http_addr :$NATS2SSE_PORT -subjects "drone.>"'
 
   stop:
     desc: Stop nats2sse
