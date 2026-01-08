@@ -61,6 +61,18 @@ func (s *Simulator) ActiveDrone() *Drone { return s.activeDrone() }
 // Drones returns the underlying slice of drones for external iteration.
 func (s *Simulator) Drones() []*Drone { return s.drones }
 
+// Lock acquires exclusive lock for external callers (e.g., NATS commands).
+func (s *Simulator) Lock() { s.mu.Lock() }
+
+// Unlock releases exclusive lock.
+func (s *Simulator) Unlock() { s.mu.Unlock() }
+
+// RLock acquires read lock for external callers (e.g., telemetry reads).
+func (s *Simulator) RLock() { s.mu.RLock() }
+
+// RUnlock releases read lock.
+func (s *Simulator) RUnlock() { s.mu.RUnlock() }
+
 func NewSimulator() *Simulator {
 	// Create a small swarm (leader + followers)
 	n := 20

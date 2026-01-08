@@ -4,6 +4,7 @@ dotenv: ['.env']
 
 includes:
   voxel: ./Taskfile.voxel.yml
+  narun: ./Taskfile.narun.yml
 
 vars:
   BIN_DIR: .bin

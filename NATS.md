@@ -7,11 +7,11 @@ https://github.com/joeblew999/UAV-simulator
 
 
 
-## Overview
+## Why
 
 Integrate NATS messaging so or any external agent can control the drone simulator via NATS CLI. This enables AI-driven flight control, automated testing, and remote operation.
 
-## Dev
+## How
 
 You only need Taskfile to run everything.
 

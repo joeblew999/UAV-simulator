@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"time"
 
+	natsclient "drone-simulator/internal/nats"
 	sim "drone-simulator/internal/sim"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
@@ -48,12 +49,6 @@ func main() {
 		fmt.Printf("Completed %d steps in %s (achieved ~%.1f UPS)\n", performed, elapsed.Truncate(time.Millisecond), achievedUPS)
 		fmt.Printf("Leader pos=(%.2f, %.2f, %.2f) battery=%.1f%% throttle=%.0f%%\n", ad.Position.X, ad.Position.Y, ad.Position.Z, ad.BatteryPercent, ad.ThrottlePercent)
 		return
-	}
-
-	// Connect to NATS if URL provided
-	if *natsURL != "" {
-		fmt.Printf("NATS URL: %s (integration pending)\n", *natsURL)
-		// TODO: Initialize NATS client
 	}
 
 	fmt.Println("Drone Simulator Starting...")
@@ -95,10 +90,31 @@ func main() {
 	fmt.Printf("OpenGL version: %s\n", gl.GoStr(gl.GetString(gl.VERSION)))
 	fmt.Printf("GLSL version: %s\n", gl.GoStr(gl.GetString(gl.SHADING_LANGUAGE_VERSION)))
 
-    simulator := sim.NewSimulator()
-    if *decoupled {
-        simulator.RunDecoupled(window)
-    } else {
-        simulator.Run(window)
-    }
+	simulator := sim.NewSimulator()
+
+	// Connect to NATS if URL provided
+	var natsClient *natsclient.Client
+	if *natsURL != "" {
+		var err error
+		natsClient, err = natsclient.New(*natsURL, simulator)
+		if err != nil {
+			log.Printf("Warning: Failed to connect to NATS: %v", err)
+		} else {
+			if err := natsClient.Start(); err != nil {
+				log.Printf("Warning: Failed to start NATS client: %v", err)
+				natsClient = nil
+			}
+		}
+	}
+
+	if *decoupled {
+		simulator.RunDecoupled(window)
+	} else {
+		simulator.Run(window)
+	}
+
+	// Cleanup NATS on exit
+	if natsClient != nil {
+		natsClient.Stop()
+	}
 }
