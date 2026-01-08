@@ -50,19 +50,21 @@ Browser (Datastar/HTMX)
 - [ ] Verify narun-gw routing works
 - [ ] Add SSE endpoint for telemetry streaming
 
-### Phase 2: Datastar Dashboard
-- [ ] Create Go template with Datastar attributes
-- [ ] Real-time telemetry updates via SSE (`data-on-load="@get('/drone/')..."`)
+### Phase 2: Via + Datastar Dashboard
+- [ ] Add Via web server system (`systems/via/`)
+- [ ] Create Go templates with Datastar attributes
+- [ ] Real-time telemetry updates via SSE
 - [ ] Control buttons with `data-on-click="@post('/drone/0/arm')"`
 - [ ] Drone list with reactive updates
 - [ ] Battery/altitude gauges
 - [ ] Flight mode selector
 
-**Why Datastar?**
+**Why Via + Datastar?**
+- Via: Go web framework with first-class Datastar support
+- Datastar: Hypermedia framework with SSE for real-time updates
 - No build step, just HTML + Go templates
-- SSE for real-time updates (perfect for telemetry)
-- Can connect directly to NATS via narun-gw SSE
-- Hypermedia-driven, no JSON parsing in browser
+- Perfect for drone telemetry dashboards
+- https://github.com/nicois/via
 - https://data-star.dev/
 
 **NATS → SSE Flow (via nats2sse):**
