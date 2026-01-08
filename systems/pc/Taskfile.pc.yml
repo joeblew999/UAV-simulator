@@ -19,6 +19,9 @@ tasks:
       - echo "ROOT_DIR={{.ROOT_DIR}}"
       - echo "BIN_DIR={{.BIN_DIR}}"
       - echo "PROCESS_COMPOSE_BIN={{.PROCESS_COMPOSE_BIN}}"
+      - echo ""
+      - echo "=== Env ==="
+      - echo "PC_PORT=$PC_PORT"
     silent: true
 
   deps:install:
@@ -37,17 +40,17 @@ tasks:
   up:
     desc: Start NATS + Simulator together (process-compose)
     cmds:
-      - '{{.PROCESS_COMPOSE_BIN}} up'
+      - '{{.PROCESS_COMPOSE_BIN}} up --port $PC_PORT'
 
   up:bg:
     desc: Start NATS + Simulator in background
     cmds:
-      - '{{.PROCESS_COMPOSE_BIN}} up -d -t=false'
+      - '{{.PROCESS_COMPOSE_BIN}} up -d -t=false --port $PC_PORT'
 
   up:headless:
     desc: Start NATS + Simulator without TUI (for CI/testing)
     cmds:
-      - '{{.PROCESS_COMPOSE_BIN}} up -t=false'
+      - '{{.PROCESS_COMPOSE_BIN}} up -t=false --port $PC_PORT'
 
   down:
     desc: Stop all process-compose services

@@ -51,6 +51,7 @@ tasks:
       - echo "VOXEL_PORT=$VOXEL_PORT"
       - echo "NARUN_PORT=$NARUN_PORT"
       - echo "NARUN_METRICS_PORT=$NARUN_METRICS_PORT"
+      - echo "PC_PORT=$PC_PORT"
     silent: true
 
   debug:all:
