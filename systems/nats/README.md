@@ -50,8 +50,8 @@ nats pub drone.0.arm ''
 # Take off to 5 meters
 nats pub drone.0.takeoff '{"altitude": 5}'
 
-# Fly to position (x, y, z)
-nats pub drone.0.goto '{"x": 10, "y": 5, "z": 10}'
+# Fly to altitude (y) - lateral positioning not yet supported
+nats pub drone.0.goto '{"x": 0, "y": 10, "z": 0}'
 
 # Set throttle/yaw/pitch/roll directly
 nats pub drone.0.input '{"throttle": 0.6, "yaw": 0, "pitch": 0, "roll": 0}'
@@ -138,7 +138,7 @@ Telemetry is published at 10Hz on `drone.<id>.telemetry`:
 | `drone.<id>.disarm` | `''` | Disarm the drone |
 | `drone.<id>.takeoff` | `{"altitude": 5}` | Take off to altitude (m) |
 | `drone.<id>.land` | `''` | Land at current position |
-| `drone.<id>.goto` | `{"x": 0, "y": 10, "z": 0}` | Fly to position |
+| `drone.<id>.goto` | `{"x": 0, "y": 10, "z": 0}` | Fly to altitude (lateral X/Z not yet supported) |
 | `drone.<id>.input` | `{"throttle": 0.5, "yaw": 0, "pitch": 0, "roll": 0}` | Direct control |
 | `drone.<id>.mode` | `{"mode": "Hover"}` | Set flight mode |
 | `drone.<id>.stop` | `''` | Emergency stop (disarm + zero throttle) |
@@ -153,8 +153,8 @@ task pc:up
 nats pub drone.0.arm ''
 nats pub drone.0.takeoff '{"altitude": 5}'
 
-# 3. Wait for altitude, then navigate
-nats pub drone.0.goto '{"x": 10, "y": 5, "z": 10}'
+# 3. Wait for altitude, then change altitude
+nats pub drone.0.goto '{"x": 0, "y": 10, "z": 0}'
 
 # 4. Monitor telemetry
 nats sub drone.0.telemetry --count=1

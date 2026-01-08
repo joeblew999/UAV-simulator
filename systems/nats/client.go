@@ -314,14 +314,18 @@ func (c *Client) handleGoto(msg *nats.Msg) {
 		return
 	}
 
+	// GOTO currently only supports altitude control.
+	// Lateral positioning (X, Z) is not implemented because the simulator's
+	// internal physics (stability damping, motor torques) conflicts with
+	// external torque control. Full 3D positioning would require either:
+	// - Modifications to the simulator's flight controller
+	// - Use of swarm mode (which has its own lateral control)
 	c.simulator.Lock()
-	// Set Hover mode which uses position PID
-	drone.SetFlightMode(sim.FlightModeHover)
+	drone.SetFlightMode(sim.FlightModeAltitudeHold)
 	drone.AltitudeHold = cmd.Y
-	// Note: Position tracking would need simulator support for target position
-	// For now, just set altitude hold
 	c.simulator.Unlock()
-	log.Printf("drone %d goto (%.1f, %.1f, %.1f)", id, cmd.X, cmd.Y, cmd.Z)
+
+	log.Printf("drone %d goto altitude %.1f (lateral X=%.1f Z=%.1f not yet supported)", id, cmd.Y, cmd.X, cmd.Z)
 }
 
 func (c *Client) handleInput(msg *nats.Msg) {
@@ -463,3 +467,4 @@ func flightModeString(mode sim.FlightMode) string {
 		return "Unknown"
 	}
 }
+

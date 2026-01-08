@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"time"
 
-	natsclient "drone-simulator/internal/nats"
+	natsclient "drone-simulator/systems/nats"
 	sim "drone-simulator/internal/sim"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"

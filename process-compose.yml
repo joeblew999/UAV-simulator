@@ -1,5 +1,8 @@
 version: "0.5"
 
+# Load environment variables from .env file
+env_file: .env
+
 processes:
   nats-server:
     command: task nats:start
@@ -26,7 +29,7 @@ processes:
 
   # Voxel-fun 3D visualizer
   voxel:
-    command: task voxel:run
+    command: task voxel:start
     depends_on:
       nats-server:
         condition: process_healthy

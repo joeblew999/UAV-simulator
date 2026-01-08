@@ -1,0 +1,55 @@
+version: '3'
+
+vars:
+  ROOT_DIR: '{{.ROOT_DIR | default "."}}'
+  SRC_DIR: '{{.ROOT_DIR}}/.src'
+  NARUN_DIR: '{{.SRC_DIR}}/narun'
+  NARUN_REPO: https://github.com/akhenakh/narun.git
+
+tasks:
+  debug:
+    desc: Print all vars and env for debugging
+    cmds:
+      - echo "=== Vars ==="
+      - echo "ROOT_DIR={{.ROOT_DIR}}"
+      - echo "SRC_DIR={{.SRC_DIR}}"
+      - echo "NARUN_DIR={{.NARUN_DIR}}"
+      - echo "NARUN_REPO={{.NARUN_REPO}}"
+    silent: true
+
+  clone:
+    desc: Clone narun repository
+    status:
+      - test -d {{.NARUN_DIR}}
+    cmds:
+      - mkdir -p {{.SRC_DIR}}
+      - git clone {{.NARUN_REPO}} {{.NARUN_DIR}}
+
+  pull:
+    desc: Pull latest narun changes
+    cmds:
+      - cd {{.NARUN_DIR}} && git pull
+
+  deps:install:
+    desc: Build narun binary
+    deps:
+      - clone
+    cmds:
+      - cd {{.NARUN_DIR}} && go build -o narun ./cmd/narun
+
+  deps:clean:
+    desc: Remove narun source directory
+    cmds:
+      - rm -rf {{.NARUN_DIR}}
+
+  start:
+    desc: Start narun (connects to NATS server)
+    deps:
+      - deps:install
+    cmds:
+      - cd {{.NARUN_DIR}} && ./narun -nats $NATS_URL
+
+  stop:
+    desc: Stop narun
+    cmds:
+      - pkill -f narun || true

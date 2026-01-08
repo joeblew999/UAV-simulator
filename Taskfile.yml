@@ -3,18 +3,27 @@ version: '3'
 dotenv: ['.env']
 
 includes:
-  voxel: ./Taskfile.voxel.yml
-  narun: ./Taskfile.narun.yml
+  voxel:
+    taskfile: ./systems/voxel/Taskfile.voxel.yml
+    vars:
+      ROOT_DIR: '{{.PWD}}'
+  nats:
+    taskfile: ./systems/nats/Taskfile.nats.yml
+    vars:
+      ROOT_DIR: '{{.PWD}}'
+  narun:
+    taskfile: ./systems/narun/Taskfile.narun.yml
+    vars:
+      ROOT_DIR: '{{.PWD}}'
+  pc:
+    taskfile: ./systems/pc/Taskfile.pc.yml
+    vars:
+      ROOT_DIR: '{{.PWD}}'
 
 vars:
+  # globals
   BIN_DIR: .bin
   DATA_DIR: .data
-
-  EXE_EXT: '{{if eq OS "windows"}}.exe{{end}}'
-  PROCESS_COMPOSE: '{{.BIN_DIR}}/process-compose{{.EXE_EXT}}'
-  NATS_SERVER: '{{.BIN_DIR}}/nats-server{{.EXE_EXT}}'
-  NATS_CLI: '{{.BIN_DIR}}/nats{{.EXE_EXT}}'
-  NATS_DATA_DIR: '{{.DATA_DIR}}/nats'
 
 tasks:
   default:
@@ -28,10 +37,6 @@ tasks:
       - echo "=== Vars ==="
       - echo "BIN_DIR={{.BIN_DIR}}"
       - echo "DATA_DIR={{.DATA_DIR}}"
-      - echo "NATS_DATA_DIR={{.NATS_DATA_DIR}}"
-      - echo "PROCESS_COMPOSE={{.PROCESS_COMPOSE}}"
-      - echo "NATS_SERVER={{.NATS_SERVER}}"
-      - echo "NATS_CLI={{.NATS_CLI}}"
       - echo ""
       - echo "=== Env (.env) ==="
       - echo "NATS_PORT=$NATS_PORT"
@@ -88,68 +93,16 @@ tasks:
 
   # Deps tasks
   deps:install:
-    desc: Install all external dependencies (process-compose, nats)
+    desc: Install all external dependencies (process-compose, nats, voxel)
     deps:
-      - deps:install:process-compose
-      - deps:install:nats-server
-      - deps:install:nats-cli
-
-  deps:install:process-compose:
-    desc: Install process-compose
-    status:
-      - test -f {{.PROCESS_COMPOSE}}
-    cmds:
-      - mkdir -p {{.BIN_DIR}}
-      - sh -c "$(curl --location https://raw.githubusercontent.com/F1bonacc1/process-compose/main/scripts/get-pc.sh)" -- -d -b {{.BIN_DIR}}
-
-  deps:install:nats-server:
-    desc: Install NATS server
-    status:
-      - test -f {{.NATS_SERVER}}
-    cmds:
-      - mkdir -p {{.BIN_DIR}}
-      - GOBIN={{.PWD}}/{{.BIN_DIR}} go install github.com/nats-io/nats-server/v2@latest
-
-  deps:install:nats-cli:
-    desc: Install NATS CLI
-    status:
-      - test -f {{.NATS_CLI}}
-    cmds:
-      - mkdir -p {{.BIN_DIR}}
-      - GOBIN={{.PWD}}/{{.BIN_DIR}} go install github.com/nats-io/natscli/nats@latest
+      - pc:deps:install
+      - nats:deps:install
+      - voxel:deps:install
 
   deps:clean:
     desc: Remove all installed dependencies
     cmds:
       - rm -rf {{.BIN_DIR}}
-
-  # NATS tasks (called by process-compose)
-  nats:start:
-    desc: Start NATS server (called by process-compose)
-    deps:
-      - deps:install:nats-server
-    cmds:
-      - mkdir -p {{.NATS_DATA_DIR}}
-      - '{{.NATS_SERVER}} -DV -p $NATS_PORT -js -sd {{.NATS_DATA_DIR}}'
-
-  nats:status:
-    desc: Check NATS server status
-    deps:
-      - deps:install:nats-cli
-    cmds:
-      - '{{.NATS_CLI}} rtt --server $NATS_URL'
-
-  nats:stop:
-    desc: Stop NATS server
-    cmds:
-      - pkill -f nats-server || true
-
-  nats:sub:
-    desc: Subscribe to all drone telemetry
-    deps:
-      - deps:install:nats-cli
-    cmds:
-      - '{{.NATS_CLI}} sub "uav.>"'
 
   # Simulator tasks (called by process-compose)
   sim:run:
@@ -175,39 +128,3 @@ tasks:
       - task: go:fmt
       - task: go:vet
       - task: go:test
-
-  # Process Compose tasks
-  pc:up:
-    desc: Start NATS + Simulator together (process-compose)
-    deps:
-      - deps:install
-    cmds:
-      - '{{.PROCESS_COMPOSE}} up'
-
-  pc:up:bg:
-    desc: Start NATS + Simulator in background
-    deps:
-      - deps:install
-    cmds:
-      - '{{.PROCESS_COMPOSE}} up -d -t=false'
-
-  pc:up:headless:
-    desc: Start NATS + Simulator without TUI (for CI/testing)
-    deps:
-      - deps:install
-    cmds:
-      - '{{.PROCESS_COMPOSE}} up -t=false'
-
-  pc:down:
-    desc: Stop all process-compose services
-    deps:
-      - deps:install:process-compose
-    cmds:
-      - '{{.PROCESS_COMPOSE}} down'
-
-  pc:attach:
-    desc: Attach to running process-compose TUI
-    deps:
-      - deps:install:process-compose
-    cmds:
-      - '{{.PROCESS_COMPOSE}} attach'

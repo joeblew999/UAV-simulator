@@ -1,0 +1,55 @@
+version: '3'
+
+vars:
+  ROOT_DIR: '{{.ROOT_DIR | default "."}}'
+  BIN_DIR: '{{.ROOT_DIR}}/.bin'
+  EXE_EXT: '{{if eq OS "windows"}}.exe{{end}}'
+  PROCESS_COMPOSE: '{{.BIN_DIR}}/process-compose{{.EXE_EXT}}'
+
+tasks:
+  debug:
+    desc: Print all vars for debugging
+    cmds:
+      - echo "=== Process Compose Vars ==="
+      - echo "ROOT_DIR={{.ROOT_DIR}}"
+      - echo "BIN_DIR={{.BIN_DIR}}"
+      - echo "PROCESS_COMPOSE={{.PROCESS_COMPOSE}}"
+    silent: true
+
+  deps:install:
+    desc: Install process-compose
+    status:
+      - test -f {{.PROCESS_COMPOSE}}
+    cmds:
+      - mkdir -p {{.BIN_DIR}}
+      - sh -c "$(curl --location https://raw.githubusercontent.com/F1bonacc1/process-compose/main/scripts/get-pc.sh)" -- -d -b {{.BIN_DIR}}
+
+  deps:clean:
+    desc: Remove process-compose binary
+    cmds:
+      - rm -f {{.PROCESS_COMPOSE}}
+
+  up:
+    desc: Start NATS + Simulator together (process-compose)
+    cmds:
+      - '{{.PROCESS_COMPOSE}} up'
+
+  up:bg:
+    desc: Start NATS + Simulator in background
+    cmds:
+      - '{{.PROCESS_COMPOSE}} up -d -t=false'
+
+  up:headless:
+    desc: Start NATS + Simulator without TUI (for CI/testing)
+    cmds:
+      - '{{.PROCESS_COMPOSE}} up -t=false'
+
+  down:
+    desc: Stop all process-compose services
+    cmds:
+      - '{{.PROCESS_COMPOSE}} down'
+
+  attach:
+    desc: Attach to running process-compose TUI
+    cmds:
+      - '{{.PROCESS_COMPOSE}} attach'

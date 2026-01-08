@@ -10,11 +10,20 @@
 - [x] Process Compose orchestration (NATS + Simulator)
 - [x] Taskfile integration
 
-## In Progress
-
-- [ ] Fix GOTO command (not moving drone to position)
-
 ## TODO
+
+### GOTO Lateral Control
+
+The GOTO command currently only supports altitude (Y) control. Lateral positioning (X, Z) is not implemented because:
+
+1. The simulator's internal physics (stability damping, motor torques) conflicts with external torque control
+2. Attempting to apply AddTorque from the NATS client results in oscillation and movement in the wrong direction
+3. The swarm.go has lateral control that works because it runs inside the simulator's physics loop
+
+**Possible solutions:**
+- Modify simulator to expose a position controller API
+- Add a "target position" field that the simulator's internal control loop handles
+- Use swarm mode for multi-drone positioning
 
 ### Stability
 

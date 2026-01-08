@@ -1,11 +1,22 @@
 version: '3'
 
 vars:
-  SRC_DIR: .src
+  ROOT_DIR: '{{.ROOT_DIR | default "."}}'
+  SRC_DIR: '{{.ROOT_DIR}}/.src'
   VOXEL_DIR: '{{.SRC_DIR}}/voxel-fun'
   VOXEL_REPO: https://github.com/pawel-dubiel/voxel-fun.git
 
 tasks:
+  debug:
+    desc: Print all vars for debugging
+    cmds:
+      - echo "=== Vars ==="
+      - echo "ROOT_DIR={{.ROOT_DIR}}"
+      - echo "SRC_DIR={{.SRC_DIR}}"
+      - echo "VOXEL_DIR={{.VOXEL_DIR}}"
+      - echo "VOXEL_REPO={{.VOXEL_REPO}}"
+    silent: true
+
   clone:
     desc: Clone voxel-fun repository
     status:
@@ -16,27 +27,29 @@ tasks:
 
   pull:
     desc: Pull latest voxel-fun changes
-    dir: '{{.VOXEL_DIR}}'
     cmds:
-      - git pull
+      - cd {{.VOXEL_DIR}} && git pull
 
   deps:install:
     desc: Install voxel-fun dependencies
-    dir: '{{.VOXEL_DIR}}'
     deps:
       - clone
     cmds:
-      - bun install
+      - cd {{.VOXEL_DIR}} && bun install
 
   deps:clean:
     desc: Remove voxel-fun source directory
     cmds:
       - rm -rf {{.SRC_DIR}}
 
-  run:
-    desc: Run voxel-fun visualizer
-    dir: '{{.VOXEL_DIR}}'
+  start:
+    desc: Start voxel-fun visualizer
     deps:
       - deps:install
     cmds:
-      - bun run dev
+      - cd {{.VOXEL_DIR}} && bun run dev
+
+  stop:
+    desc: Stop voxel-fun visualizer
+    cmds:
+      - pkill -f "bun run dev" || true
