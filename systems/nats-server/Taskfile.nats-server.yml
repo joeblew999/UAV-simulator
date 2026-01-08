@@ -5,7 +5,7 @@ vars:
   BIN_DIR: '{{.ROOT_DIR}}/.bin'
   DATA_DIR: '{{.ROOT_DIR}}/.data'
   EXE_EXT: '{{if eq OS "windows"}}.exe{{end}}'
-  NATS_SERVER_BIN_DIR: '{{.BIN_DIR}}/nats-server{{.EXE_EXT}}'
+  NATS_SERVER_BIN: '{{.BIN_DIR}}/nats-server{{.EXE_EXT}}'
   NATS_SERVER_BIN_NAME: 'nats-server{{.EXE_EXT}}'
   NATS_SERVER_DATA_DIR: '{{.DATA_DIR}}/nats-server'
 
@@ -22,7 +22,8 @@ tasks:
       - echo "ROOT_DIR={{.ROOT_DIR}}"
       - echo "BIN_DIR={{.BIN_DIR}}"
       - echo "DATA_DIR={{.DATA_DIR}}"
-      - echo "NATS_SERVER_BIN_DIR={{.NATS_SERVER_BIN_DIR}}"
+      - echo "NATS_SERVER_BIN={{.NATS_SERVER_BIN}}"
+      - echo "NATS_SERVER_BIN_NAME={{.NATS_SERVER_BIN_NAME}}"
       - echo "NATS_SERVER_DATA_DIR={{.NATS_SERVER_DATA_DIR}}"
       - echo ""
       - echo "=== Env ==="
@@ -33,7 +34,7 @@ tasks:
   deps:install:
     desc: Install NATS server
     status:
-      - test -f {{.NATS_SERVER_BIN_DIR}}
+      - test -f {{.NATS_SERVER_BIN}}
     cmds:
       - mkdir -p {{.BIN_DIR}}
       - GOBIN={{.BIN_DIR}} go install github.com/nats-io/nats-server/v2@latest
@@ -41,7 +42,7 @@ tasks:
   deps:clean:
     desc: Remove NATS server binary and data
     cmds:
-      - rm -f {{.NATS_SERVER_BIN_DIR}}
+      - rm -f {{.NATS_SERVER_BIN}}
       - rm -rf {{.NATS_SERVER_DATA_DIR}}
 
   start:
@@ -50,7 +51,7 @@ tasks:
       - deps:install
     cmds:
       - mkdir -p {{.NATS_SERVER_DATA_DIR}}
-      - '{{.NATS_SERVER_BIN_DIR}} -DV -p $NATS_PORT -js -sd {{.NATS_SERVER_DATA_DIR}}'
+      - '{{.NATS_SERVER_BIN}} -DV -p $NATS_PORT -js -sd {{.NATS_SERVER_DATA_DIR}}'
 
   stop:
     desc: Stop NATS server

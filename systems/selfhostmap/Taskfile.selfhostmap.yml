@@ -6,7 +6,7 @@ vars:
   SRC_DIR: '{{.ROOT_DIR}}/.src'
   EXE_EXT: '{{if eq OS "windows"}}.exe{{end}}'
   SELFHOSTMAP_DIR: '{{.SRC_DIR}}/selfhostmap'
-  SELFHOSTMAP_BIN_DIR: '{{.BIN_DIR}}/selfhostmap{{.EXE_EXT}}'
+  SELFHOSTMAP_BIN: '{{.BIN_DIR}}/selfhostmap{{.EXE_EXT}}'
   SELFHOSTMAP_BIN_NAME: 'selfhostmap{{.EXE_EXT}}'
   SELFHOSTMAP_REPO: https://github.com/akhenakh/selfhostmap.git
 
@@ -24,7 +24,7 @@ tasks:
       - echo "BIN_DIR={{.BIN_DIR}}"
       - echo "SRC_DIR={{.SRC_DIR}}"
       - echo "SELFHOSTMAP_DIR={{.SELFHOSTMAP_DIR}}"
-      - echo "SELFHOSTMAP_BIN_DIR={{.SELFHOSTMAP_BIN_DIR}}"
+      - echo "SELFHOSTMAP_BIN={{.SELFHOSTMAP_BIN}}"
       - echo "SELFHOSTMAP_BIN_NAME={{.SELFHOSTMAP_BIN_NAME}}"
       - echo ""
       - echo "=== Env ==="
@@ -44,23 +44,23 @@ tasks:
     deps:
       - clone
     status:
-      - test -x {{.SELFHOSTMAP_BIN_DIR}}
+      - test -x {{.SELFHOSTMAP_BIN}}
     cmds:
       - mkdir -p {{.BIN_DIR}}
-      - cd {{.SELFHOSTMAP_DIR}} && go build -o {{.SELFHOSTMAP_BIN_DIR}} ./cmd/selfhostmap
+      - cd {{.SELFHOSTMAP_DIR}} && go build -o {{.SELFHOSTMAP_BIN}} ./cmd/selfhostmap
 
   deps:clean:
     desc: Remove selfhostmap source and binary
     cmds:
       - rm -rf {{.SELFHOSTMAP_DIR}}
-      - rm -f {{.SELFHOSTMAP_BIN_DIR}}
+      - rm -f {{.SELFHOSTMAP_BIN}}
 
   start:
     desc: Start selfhostmap server
     deps:
       - deps:install
     cmds:
-      - '{{.SELFHOSTMAP_BIN_DIR}} -addr :$SELFHOSTMAP_PORT'
+      - '{{.SELFHOSTMAP_BIN}} -addr :$SELFHOSTMAP_PORT'
 
   stop:
     desc: Stop selfhostmap server
