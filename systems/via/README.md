@@ -1,6 +1,6 @@
 # Via Dashboard
 
-Web dashboard for drone control using [Via](https://github.com/nicois/via) + [Datastar](https://data-star.dev/).
+Web dashboard for drone control using [Via](https://github.com/go-via/via) + [Datastar](https://data-star.dev/).
 
 ## Architecture
 

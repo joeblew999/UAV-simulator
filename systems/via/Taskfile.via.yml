@@ -3,12 +3,10 @@ version: '3'
 vars:
   ROOT_DIR: '{{.ROOT_DIR | default "."}}'
   BIN_DIR: '{{.ROOT_DIR}}/.bin'
-  SRC_DIR: '{{.ROOT_DIR}}/.src'
   EXE_EXT: '{{if eq OS "windows"}}.exe{{end}}'
-  VIA_DIR: '{{.SRC_DIR}}/via'
+  VIA_SRC_DIR: '{{.ROOT_DIR}}/systems/via'
   VIA_BIN: '{{.BIN_DIR}}/via-dashboard{{.EXE_EXT}}'
   VIA_BIN_NAME: 'via-dashboard{{.EXE_EXT}}'
-  VIA_REPO: https://github.com/nicois/via.git
 
 tasks:
   default:
@@ -22,8 +20,7 @@ tasks:
       - echo "=== Via Vars ==="
       - echo "ROOT_DIR={{.ROOT_DIR}}"
       - echo "BIN_DIR={{.BIN_DIR}}"
-      - echo "SRC_DIR={{.SRC_DIR}}"
-      - echo "VIA_DIR={{.VIA_DIR}}"
+      - echo "VIA_SRC_DIR={{.VIA_SRC_DIR}}"
       - echo "VIA_BIN={{.VIA_BIN}}"
       - echo "VIA_BIN_NAME={{.VIA_BIN_NAME}}"
       - echo ""
@@ -31,34 +28,28 @@ tasks:
       - echo "VIA_PORT=$VIA_PORT"
       - echo "NATS_URL=$NATS_URL"
       - echo "NATS2SSE_PORT=$NATS2SSE_PORT"
+      - echo "NARUN_PORT=$NARUN_PORT"
     silent: true
-
-  clone:
-    desc: Clone Via repository (for reference/examples)
-    status:
-      - test -d {{.VIA_DIR}}
-    cmds:
-      - mkdir -p {{.SRC_DIR}}
-      - git clone {{.VIA_REPO}} {{.VIA_DIR}}
 
   deps:install:
     desc: Build the Via dashboard
+    status:
+      - test -x {{.VIA_BIN}}
     cmds:
       - mkdir -p {{.BIN_DIR}}
-      - echo "TODO: Build Via dashboard from systems/via/cmd/"
-      # - cd systems/via/cmd && go build -o {{.VIA_BIN}} .
+      - cd {{.VIA_SRC_DIR}} && go build -o {{.VIA_BIN}} ./cmd/dashboard
 
   deps:clean:
-    desc: Remove Via source and binary
+    desc: Remove Via dashboard binary
     cmds:
-      - rm -rf {{.VIA_DIR}}
       - rm -f {{.VIA_BIN}}
 
   start:
     desc: Start Via dashboard server
+    deps:
+      - deps:install
     cmds:
-      - echo "TODO: Start Via dashboard on port $VIA_PORT"
-      # - '{{.VIA_BIN}} -addr :$VIA_PORT'
+      - '{{.VIA_BIN}} -addr :$VIA_PORT -nats-url $NATS_URL -narun-url http://localhost:$NARUN_PORT -sse-url http://localhost:$NATS2SSE_PORT'
 
   stop:
     desc: Stop Via dashboard

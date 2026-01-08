@@ -64,7 +64,7 @@ Browser (Datastar/HTMX)
 - Datastar: Hypermedia framework with SSE for real-time updates
 - No build step, just HTML + Go templates
 - Perfect for drone telemetry dashboards
-- https://github.com/nicois/via
+- https://github.com/go-via/via
 - https://data-star.dev/
 
 **Architecture:**
@@ -93,7 +93,7 @@ Browser (Datastar/HTMX)
 - **Via** serves the dashboard HTML + handles control actions
 - **nats2sse** streams real-time telemetry to browser via SSE
 - **narun-gw** routes HTTP commands to NATS Micro service
-- https://github.com/nicois/via
+- https://github.com/go-via/via
 - https://github.com/akhenakh/nats2sse
 
 ### Phase 3: Voxel Integration
