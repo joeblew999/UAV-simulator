@@ -1,0 +1,66 @@
+version: '3'
+
+vars:
+  ROOT_DIR: '{{.ROOT_DIR | default "."}}'
+  BIN_DIR: '{{.ROOT_DIR}}/.bin'
+  SRC_DIR: '{{.ROOT_DIR}}/.src'
+  NATS2SSE_DIR: '{{.SRC_DIR}}/nats2sse'
+  NATS2SSE_BIN: '{{.BIN_DIR}}/nats2sse'
+  NATS2SSE_REPO: https://github.com/akhenakh/nats2sse.git
+
+tasks:
+  default:
+    internal: true
+    cmds:
+      - task: debug:self
+
+  debug:self:
+    desc: Print all vars and env for debugging
+    cmds:
+      - echo "=== nats2sse Vars ==="
+      - echo "ROOT_DIR={{.ROOT_DIR}}"
+      - echo "BIN_DIR={{.BIN_DIR}}"
+      - echo "SRC_DIR={{.SRC_DIR}}"
+      - echo "NATS2SSE_DIR={{.NATS2SSE_DIR}}"
+      - echo "NATS2SSE_BIN={{.NATS2SSE_BIN}}"
+      - echo ""
+      - echo "=== Env ==="
+      - echo "NATS_URL=$NATS_URL"
+      - echo "NATS2SSE_PORT=$NATS2SSE_PORT"
+    silent: true
+
+  clone:
+    desc: Clone nats2sse repository
+    status:
+      - test -d {{.NATS2SSE_DIR}}
+    cmds:
+      - mkdir -p {{.SRC_DIR}}
+      - git clone {{.NATS2SSE_REPO}} {{.NATS2SSE_DIR}}
+
+  deps:install:
+    desc: Clone and build nats2sse
+    deps:
+      - clone
+    status:
+      - test -f {{.NATS2SSE_BIN}}
+    cmds:
+      - mkdir -p {{.BIN_DIR}}
+      - cd {{.NATS2SSE_DIR}} && go build -o {{.NATS2SSE_BIN}} .
+
+  deps:clean:
+    desc: Remove nats2sse source and binary
+    cmds:
+      - rm -rf {{.NATS2SSE_DIR}}
+      - rm -f {{.NATS2SSE_BIN}}
+
+  start:
+    desc: Start nats2sse SSE bridge
+    deps:
+      - deps:install
+    cmds:
+      - '{{.NATS2SSE_BIN}} -nats-url $NATS_URL -addr :$NATS2SSE_PORT'
+
+  stop:
+    desc: Stop nats2sse
+    cmds:
+      - pkill -f nats2sse || true

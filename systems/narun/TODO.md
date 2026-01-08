@@ -5,7 +5,7 @@
 Narun provides an HTTP/gRPC gateway to NATS. This gives us:
 
 1. **Web GUI Access** - Control drones from any browser via REST API
-2. **VIA Integration** - Use VIA or any web framework to build a control dashboard
+2. **Datastar + HTMX** - Reactive hypermedia for real-time drone control
 3. **Voxel WebGL** - Connect voxel-fun (Three.js) to the simulator via HTTP
 4. **Mobile Apps** - iOS/Android can call REST endpoints
 5. **External Tools** - curl, Postman, any HTTP client can interact with drones
@@ -13,8 +13,8 @@ Narun provides an HTTP/gRPC gateway to NATS. This gives us:
 ## Architecture
 
 ```
-Browser / Mobile / VIA
-        ↓ HTTP
+Browser (Datastar/HTMX)
+        ↓ HTTP + SSE
     narun-gw (:8081)
         ↓ NATS Micro
     Drone Simulator (Go)
@@ -41,34 +41,61 @@ Browser / Mobile / VIA
 
 - [x] NATS Micro service (`systems/nats/micro.go`)
 - [x] narun-gw config (`systems/narun/config.yaml`)
+- [x] Wire up MicroService in main.go
 
 ## TODO
 
 ### Phase 1: Basic HTTP API
-- [ ] Wire up MicroService in main.go
 - [ ] Test with curl
 - [ ] Verify narun-gw routing works
+- [ ] Add SSE endpoint for telemetry streaming
 
-### Phase 2: Web Dashboard
-- [ ] Create simple HTML/JS dashboard
-- [ ] Display drone positions in real-time
-- [ ] Add control buttons (arm, takeoff, land)
-- [ ] Consider VIA framework
+### Phase 2: Datastar Dashboard
+- [ ] Create Go template with Datastar attributes
+- [ ] Real-time telemetry updates via SSE (`data-on-load="@get('/drone/')..."`)
+- [ ] Control buttons with `data-on-click="@post('/drone/0/arm')"`
+- [ ] Drone list with reactive updates
+- [ ] Battery/altitude gauges
+- [ ] Flight mode selector
+
+**Why Datastar?**
+- No build step, just HTML + Go templates
+- SSE for real-time updates (perfect for telemetry)
+- Can connect directly to NATS via narun-gw SSE
+- Hypermedia-driven, no JSON parsing in browser
+- https://data-star.dev/
+
+**NATS → SSE Flow (via nats2sse):**
+```
+NATS (drone.*.telemetry)
+        ↓ subscribe
+    nats2sse (:8083)
+        ↓ Server-Sent Events
+    Browser (Datastar)
+        ↓ reactive updates
+    DOM (gauges, positions, status)
+```
+
+https://github.com/akhenakh/nats2sse - bridges NATS subjects to SSE streams.
+Perfect for Datastar's real-time updates without polling.
 
 ### Phase 3: Voxel Integration
 - [ ] Connect voxel-fun to narun-gw
-- [ ] Send drone positions to voxel via HTTP/WebSocket
+- [ ] Send drone positions to voxel via HTTP/SSE
 - [ ] 3D visualization in browser
+- [ ] Sync camera with selected drone
 
 ### Phase 4: Mapping
 - [ ] Integrate selfhostmap (https://github.com/akhenakh/selfhostmap)
 - [ ] Display drone positions on map
 - [ ] Geofencing alerts
+- [ ] Mission waypoints
 
 ## Ideas
 
-- WebSocket endpoint for real-time telemetry streaming
-- SSE (Server-Sent Events) for push updates
-- Authentication/API keys
-- Rate limiting
+- SSE endpoint: `GET /drone/stream` - push telemetry every 100ms
+- Datastar fragments for partial updates
+- Go templates served by narun-gw or separate static server
+- Authentication via NATS credentials
 - OpenAPI/Swagger docs
+- Record/replay flight sessions via NATS JetStream
